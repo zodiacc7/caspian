@@ -5,7 +5,7 @@
 # NOT pinned: it changes often and a churning golden trains people to
 # accept diffs unread. A key vanishing is the failure this file catches.
 
-## en: 457 keys
+## en: 465 keys
   action.failed
   action.stale
   action.stoppedremote
@@ -448,6 +448,14 @@
   time.minute
   time.minutes
   time.seconds
+  upstream.enabled
+  upstream.hint
+  upstream.host
+  upstream.password
+  upstream.password_hint
+  upstream.port
+  upstream.title
+  upstream.username
   uptime.days
   uptime.hours
   uptime.justnow
@@ -464,7 +472,7 @@
   wifi.qr.caption
   wifi.qr.failed
 
-## fa: 457 keys
+## fa: 465 keys
   action.failed
   action.stale
   action.stoppedremote
@@ -907,6 +915,14 @@
   time.minute
   time.minutes
   time.seconds
+  upstream.enabled
+  upstream.hint
+  upstream.host
+  upstream.password
+  upstream.password_hint
+  upstream.port
+  upstream.title
+  upstream.username
   uptime.days
   uptime.hours
   uptime.justnow

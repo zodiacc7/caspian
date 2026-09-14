@@ -122,7 +122,6 @@ func (s *Service) engineDocument(l *link.Link, req panel.StartRequest, netOpts n
 	// OS-level DNS that never enters the tunnel needs backend enforcement too.
 	o.DNS.Intercept = true
 
-	// Optional front SOCKS5 outbound. This is independent of the local SOCKS inbound.
 	o.Upstream = xcfg.UpstreamSOCKS5{
 		Enabled:  req.Upstream.Enabled,
 		Host:     req.Upstream.Host,

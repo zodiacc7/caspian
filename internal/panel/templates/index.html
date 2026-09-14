@@ -443,6 +443,20 @@ TestEveryIsolatedValueIsIsolated fails if a value of that kind is rendered bare.
     <p class="hint">{{.T "advanced.loglevel.hint"}}</p>
 
     <label class="checkline">
+      <fieldset class="upstream-box">
+        <legend>{{.T "upstream.title"}}</legend>
+        <p class="hint">{{.T "upstream.hint"}}</p>
+        <label><input type="checkbox" name="upstream_enabled" value="1" {{if .UpstreamEnabled}}checked{{end}}> {{.T "upstream.enabled"}}</label>
+        <label for="upstream_host">{{.T "upstream.host"}}</label>
+        <input id="upstream_host" name="upstream_host" type="text" value="{{.UpstreamHost}}" dir="ltr" autocomplete="off" spellcheck="false">
+        <label for="upstream_port">{{.T "upstream.port"}}</label>
+        <input id="upstream_port" name="upstream_port" type="number" min="1" max="65535" value="{{.UpstreamPort}}" dir="ltr">
+        <label for="upstream_username">{{.T "upstream.username"}}</label>
+        <input id="upstream_username" name="upstream_username" type="text" value="{{.UpstreamUsername}}" dir="ltr" autocomplete="off">
+        <label for="upstream_password">{{.T "upstream.password"}}</label>
+        <input id="upstream_password" name="upstream_password" type="password" value="" dir="ltr" autocomplete="new-password">
+        <p class="hint">{{.T "upstream.password_hint"}}</p>
+      </fieldset>
       <input type="checkbox" name="panel_on_lan" value="1" {{if .PanelOnLAN}}checked{{end}}>
       {{.T "advanced.panelonlan"}}
     </label>

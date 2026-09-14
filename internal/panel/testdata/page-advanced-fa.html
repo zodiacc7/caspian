@@ -529,6 +529,20 @@
     <p class="hint">کاسپین پیش از نمایش این خط‌ها، کلیدها و رمزها را از آن‌ها پاک می‌کند.</p>
 
     <label class="checkline">
+      <fieldset class="upstream-box">
+        <legend>پراکسی بالادستی SOCKS5</legend>
+        <p class="hint">اختیاری است؛ ترافیک کاسپین ابتدا به این SOCKS5 می‌رود و نیازی به VLESS یا VMess جداگانه نیست.</p>
+        <label><input type="checkbox" name="upstream_enabled" value="1" > استفاده از پراکسی بالادستی</label>
+        <label for="upstream_host">آدرس / IP پراکسی</label>
+        <input id="upstream_host" name="upstream_host" type="text" value="" dir="ltr" autocomplete="off" spellcheck="false">
+        <label for="upstream_port">پورت</label>
+        <input id="upstream_port" name="upstream_port" type="number" min="1" max="65535" value="" dir="ltr">
+        <label for="upstream_username">نام کاربری (اختیاری)</label>
+        <input id="upstream_username" name="upstream_username" type="text" value="" dir="ltr" autocomplete="off">
+        <label for="upstream_password">رمز عبور (اختیاری)</label>
+        <input id="upstream_password" name="upstream_password" type="password" value="" dir="ltr" autocomplete="new-password">
+        <p class="hint">اگر رمز قبلی تنظیم شده و این کادر خالی باشد، رمز قبلی حفظ می‌شود.</p>
+      </fieldset>
       <input type="checkbox" name="panel_on_lan" value="1" >
       این صفحه از شبکه‌ای که این دستگاه به آن وصل است هم باز شود
     </label>

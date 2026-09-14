@@ -402,6 +402,11 @@ func (p *Panel) bringUp(ctx context.Context, st state.State, via func(context.Co
 		TCPSplit:       st.Proxy.TCPSplit,
 		TLSRecordSplit: st.Proxy.TLSRecordSplit,
 		ConfigJSON:     cfgJSON,
+		Upstream: UpstreamProxySpec{
+			Enabled: st.Advanced.UpstreamEnabled, Host: st.Advanced.UpstreamHost,
+			Port: st.Advanced.UpstreamPort, Username: st.Advanced.UpstreamUsername.Reveal(),
+			Password: st.Advanced.UpstreamPassword.Reveal(),
+		},
 		Hotspot: HotspotSpec{
 			SSID:       st.Hotspot.SSID,
 			Passphrase: st.Hotspot.Passphrase.Reveal(),
@@ -840,6 +845,25 @@ func (p *Panel) handleAdvanced(w http.ResponseWriter, r *http.Request) {
 	logLevel := strings.TrimSpace(r.PostFormValue("engine_log_level"))
 	onLAN := r.PostFormValue("panel_on_lan") == "1"
 	connectionsOnly := r.PostFormValue("connections_only") == "1"
+	upstreamEnabled := r.PostFormValue("upstream_enabled") == "1"
+	upstreamHost := strings.TrimSpace(r.PostFormValue("upstream_host"))
+	upstreamUsername := strings.TrimSpace(r.PostFormValue("upstream_username"))
+	upstreamPassword := r.PostFormValue("upstream_password")
+	upstreamPort := uint16(0)
+	if v := strings.TrimSpace(r.PostFormValue("upstream_port")); v != "" {
+		n, e := strconv.ParseUint(v, 10, 16)
+		if e != nil || n == 0 {
+			sess.setFlash(Problem{Headline: MsgSaveAdvancedFailed, Advice: MsgSaveFailedAdvice}, "")
+			p.home(w, r)
+			return
+		}
+		upstreamPort = uint16(n)
+	}
+	if upstreamEnabled && (upstreamHost == "" || upstreamPort == 0 || strings.ContainsAny(upstreamHost, " \t\r\n")) {
+		sess.setFlash(Problem{Headline: MsgSaveAdvancedFailed, Advice: MsgSaveFailedAdvice}, "")
+		p.home(w, r)
+		return
+	}
 
 	channel := 0
 	if v := strings.TrimSpace(r.PostFormValue("channel")); v != "" {
@@ -874,6 +898,13 @@ func (p *Panel) handleAdvanced(w http.ResponseWriter, r *http.Request) {
 		st.Advanced.Subnet = subnet
 		st.Advanced.EngineLogLevel = logLevel
 		st.Advanced.PanelOnLAN = onLAN
+		st.Advanced.UpstreamEnabled = upstreamEnabled
+		st.Advanced.UpstreamHost = upstreamHost
+		st.Advanced.UpstreamPort = upstreamPort
+		st.Advanced.UpstreamUsername = state.Secret(upstreamUsername)
+		if upstreamPassword != "" {
+			st.Advanced.UpstreamPassword = state.Secret(upstreamPassword)
+		}
 		return nil
 	})
 	if err != nil {

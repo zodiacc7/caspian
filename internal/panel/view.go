@@ -210,19 +210,23 @@ type pageData struct {
 	// bdi: HTML allows no elements inside one. The isolation is done with the
 	// Unicode characters instead, by isolateLTR, which is the mechanism bdi
 	// itself is defined in terms of.
-	AutoInternet  string
-	AutoHotspot   string
-	AutoChannel   string
-	AutoBand      string
-	AutoLogLevel  string
-	ChannelPinned bool
-	PanelOnLAN    bool
-	ConfigFacts   []Fact
-	FixedFacts    []Fact
-	EnginePhase   string
-	EngineReason  LTR
-	EngineLog     []LogLine
-	EngineDropped int
+	AutoInternet     string
+	AutoHotspot      string
+	AutoChannel      string
+	AutoBand         string
+	AutoLogLevel     string
+	ChannelPinned    bool
+	PanelOnLAN       bool
+	UpstreamEnabled  bool
+	UpstreamHost     LTR
+	UpstreamPort     LTR
+	UpstreamUsername string
+	ConfigFacts      []Fact
+	FixedFacts       []Fact
+	EnginePhase      string
+	EngineReason     LTR
+	EngineLog        []LogLine
+	EngineDropped    int
 }
 
 // Tile is one summary tile.
@@ -725,6 +729,12 @@ func (d *pageData) fillAdvanced(adv state.Advanced, det Detection, log EngineLog
 
 	d.CurrentInternet = LTR(adv.InternetInterface)
 	d.CurrentHotspot = LTR(adv.HotspotInterface)
+	d.UpstreamEnabled = adv.UpstreamEnabled
+	d.UpstreamHost = LTR(adv.UpstreamHost)
+	if adv.UpstreamPort != 0 {
+		d.UpstreamPort = LTR(strconv.Itoa(int(adv.UpstreamPort)))
+	}
+	d.UpstreamUsername = adv.UpstreamUsername.Reveal()
 	d.CurrentBand = adv.Band
 	d.CurrentCountry = LTR(adv.Country)
 	d.CurrentSubnet = LTR(adv.Subnet)
