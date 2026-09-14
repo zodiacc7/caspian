@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Apply core patch
-        run: python3 scripts/apply_upstream_socks5_v4.py
+        run: python3 scripts/apply_upstream_socks5_v5.py
       - name: Format
         run: gofmt -w internal/xcfg/options.go internal/xcfg/build.go internal/privsvc/plans.go
       - name: Test
