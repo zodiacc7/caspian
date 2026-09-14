@@ -11,119 +11,51 @@ jobs:
       - uses: actions/checkout@v4
       - name: Apply core patch
         run: python3 scripts/apply_upstream_socks5_v5.py
-      - name: Restore planner and add request field
+      - name: Restore planner and request field
         run: |
           python3 - <<'PY'
           from pathlib import Path
           from urllib.request import urlopen
-
-          upstream_url = "https://raw.githubusercontent.com/Iman/caspian/main/internal/privsvc/plans.go"
-          plans = urlopen(upstream_url, timeout=30).read().decode()
+          p = Path("internal/privsvc/plans.go")
+          s = urlopen("https://raw.githubusercontent.com/Iman/caspian/main/internal/privsvc/plans.go", timeout=30).read().decode()
           marker = "\to.DNS.Intercept = true\n"
           block = '''\to.DNS.Intercept = true
 
-          \t// Optional front SOCKS5 outbound. This is independent of the local SOCKS inbound.
           \to.Upstream = xcfg.UpstreamSOCKS5{
-          \t\tEnabled:  req.Upstream.Enabled,
-          \t\tHost:     req.Upstream.Host,
-          \t\tPort:     req.Upstream.Port,
+          \t\tEnabled: req.Upstream.Enabled,
+          \t\tHost: req.Upstream.Host,
+          \t\tPort: req.Upstream.Port,
           \t\tUsername: req.Upstream.Username,
           \t\tPassword: req.Upstream.Password,
           \t}
           '''
-          if marker not in plans:
-              raise SystemExit("plans.go marker not found")
-          Path("internal/privsvc/plans.go").write_text(plans.replace(marker, block, 1))
-
-          priv = Path("internal/panel/priv.go").read_text()
-          if "type UpstreamProxySpec struct" not in priv:
+          if marker not in s:
+              raise SystemExit("plans marker not found")
+          p.write_text(s.replace(marker, block, 1))
+          priv = Path("internal/panel/priv.go")
+          s = priv.read_text()
+          if "type UpstreamProxySpec struct" not in s:
               marker = "type StartRequest struct {\n"
               addition = '''type UpstreamProxySpec struct {
-          \tEnabled  bool
-          \tHost     string
-          \tPort     uint16
+          \tEnabled bool
+          \tHost string
+          \tPort uint16
           \tUsername string
           \tPassword string
           }
 
           type StartRequest struct {
           '''
-              if marker not in priv:
+              if marker not in s:
                   raise SystemExit("StartRequest marker not found")
-              priv = priv.replace(marker, addition, 1)
-              priv = priv.replace("type StartRequest struct {\n", "type StartRequest struct {\n\tUpstream UpstreamProxySpec\n", 1)
-              Path("internal/panel/priv.go").write_text(priv)
+              s = s.replace(marker, addition, 1)
+              s = s.replace("type StartRequest struct {\n", "type StartRequest struct {\n\tUpstream UpstreamProxySpec\n", 1)
+              priv.write_text(s)
           PY
-      - name: Apply persistent state and panel
+      - name: Apply state and panel
         run: python3 scripts/apply_upstream_panel.py
       - name: Localize upstream panel
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          template = Path("internal/panel/templates/index.html")
-          text = template.read_text()
-          old = '''  <fieldset class="upstream-box">
-    <legend>پراکسی بالادستی SOCKS5 Upstream SOCKS5 proxy</legend>
-    <p class="hint">اختیاری است؛ ترافیک کاسپین ابتدا به این SOCKS5 می‌رود و نیازی به VLESS یا VMess جداگانه نیست. Optional; Caspian sends traffic to this SOCKS5 first. No separate VLESS or VMess configuration is required.</p>
-    <label><input type="checkbox" name="upstream_enabled" value="1" {{if .UpstreamEnabled}}checked{{end}}> استفاده از پراکسی بالادستی Use upstream proxy</label>
-    <label for="upstream_host">آدرس / IP پراکسی Proxy address / IP</label>
-    <input id="upstream_host" name="upstream_host" type="text" value="{{.UpstreamHost}}" dir="ltr" autocomplete="off" spellcheck="false">
-    <label for="upstream_port">پورت Port</label>
-    <input id="upstream_port" name="upstream_port" type="number" min="1" max="65535" value="{{.UpstreamPort}}" dir="ltr" inputmode="numeric">
-    <label for="upstream_username">نام کاربری (اختیاری) Username (optional)</label>
-    <input id="upstream_username" name="upstream_username" type="text" value="{{.UpstreamUsername}}" dir="ltr" autocomplete="username" spellcheck="false">
-    <label for="upstream_password">رمز عبور (اختیاری) Password (optional)</label>
-    <input id="upstream_password" name="upstream_password" type="password" value="" dir="ltr" autocomplete="new-password">
-    <p class="hint">اگر رمز قبلی تنظیم شده و این کادر خالی باشد، رمز قبلی حفظ می‌شود. If a password is already set and this field is empty, the existing password is kept.</p>
-  </fieldset>'''
-          new = '''  <fieldset class="upstream-box">
-    <legend>{{.T "upstream.title"}}</legend>
-    <p class="hint">{{.T "upstream.hint"}}</p>
-    <label><input type="checkbox" name="upstream_enabled" value="1" {{if .UpstreamEnabled}}checked{{end}}> {{.T "upstream.enabled"}}</label>
-    <label for="upstream_host">{{.T "upstream.host"}}</label>
-    <input id="upstream_host" name="upstream_host" type="text" value="{{.UpstreamHost}}" dir="ltr" autocomplete="off" spellcheck="false">
-    <label for="upstream_port">{{.T "upstream.port"}}</label>
-    <input id="upstream_port" name="upstream_port" type="number" min="1" max="65535" value="{{.UpstreamPort}}" dir="ltr" inputmode="numeric">
-    <label for="upstream_username">{{.T "upstream.username"}}</label>
-    <input id="upstream_username" name="upstream_username" type="text" value="{{.UpstreamUsername}}" dir="ltr" autocomplete="username" spellcheck="false">
-    <label for="upstream_password">{{.T "upstream.password"}}</label>
-    <input id="upstream_password" name="upstream_password" type="password" value="" dir="ltr" autocomplete="new-password">
-    <p class="hint">{{.T "upstream.password_hint"}}</p>
-  </fieldset>'''
-          if old not in text:
-              raise SystemExit("upstream template block not found")
-          template.write_text(text.replace(old, new, 1))
-
-          messages = Path("internal/panel/i18n_messages.go")
-          text = messages.read_text()
-          fa_marker = "var messagesFA = map[Key]string{\n"
-          en_marker = "var messagesEN = map[Key]string{\n"
-          entries_fa = '''\t"upstream.title": "پراکسی بالادستی SOCKS5",
-\t"upstream.hint": "اختیاری است؛ ترافیک کاسپین ابتدا به این SOCKS5 می‌رود و نیازی به VLESS یا VMess جداگانه نیست.",
-\t"upstream.enabled": "استفاده از پراکسی بالادستی",
-\t"upstream.host": "آدرس / IP پراکسی",
-\t"upstream.port": "پورت",
-\t"upstream.username": "نام کاربری (اختیاری)",
-\t"upstream.password": "رمز عبور (اختیاری)",
-\t"upstream.password_hint": "اگر رمز قبلی تنظیم شده و این کادر خالی باشد، رمز قبلی حفظ می‌شود.",
-'''
-          entries_en = '''\t"upstream.title": "Upstream SOCKS5 proxy",
-\t"upstream.hint": "Optional; Caspian sends traffic to this SOCKS5 first. No separate VLESS or VMess configuration is required.",
-\t"upstream.enabled": "Use upstream proxy",
-\t"upstream.host": "Proxy address / IP",
-\t"upstream.port": "Port",
-\t"upstream.username": "Username (optional)",
-\t"upstream.password": "Password (optional)",
-\t"upstream.password_hint": "If a password is already set and this field is empty, the existing password is kept.",
-'''
-          if '"upstream.title"' not in text:
-              if fa_marker not in text or en_marker not in text:
-                  raise SystemExit("message map marker not found")
-              text = text.replace(fa_marker, fa_marker + entries_fa, 1)
-              text = text.replace(en_marker, en_marker + entries_en, 1)
-              messages.write_text(text)
-          PY
+        run: python3 scripts/fix_upstream_panel_i18n.py
       - name: Format
         run: gofmt -w internal/state/state.go internal/state/migrate.go internal/xcfg/options.go internal/xcfg/build.go internal/privsvc/plans.go internal/panel/priv.go internal/panel/handlers.go internal/panel/view.go internal/panel/i18n.go internal/panel/i18n_messages.go
       - name: Update panel goldens
@@ -132,12 +64,9 @@ jobs:
         run: go test ./internal/state ./internal/xcfg ./internal/privsvc ./internal/panel
       - name: Commit patch
         run: |
-          if git diff --quiet; then
-            echo "No changes to commit."
-            exit 0
-          fi
+          if git diff --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add internal/state internal/xcfg internal/privsvc internal/panel scripts/apply_upstream_panel.py .github/workflows/apply-upstream-socks5.yml
+          git add internal/state internal/xcfg internal/privsvc internal/panel scripts .github/workflows/apply-upstream-socks5.yml
           git commit -m "feat: add upstream SOCKS5 settings to panel"
           git push
