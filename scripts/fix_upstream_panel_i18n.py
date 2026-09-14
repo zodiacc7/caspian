@@ -1,40 +1,30 @@
 from pathlib import Path
+import re
 
 
 def main():
     template = Path("internal/panel/templates/index.html")
     text = template.read_text()
-    old = '''  <fieldset class="upstream-box">
-    <legend>پراکسی بالادستی SOCKS5 Upstream SOCKS5 proxy</legend>
-    <p class="hint">اختیاری است؛ ترافیک کاسپین ابتدا به این SOCKS5 می‌رود و نیازی به VLESS یا VMess جداگانه نیست. Optional; Caspian sends traffic to this SOCKS5 first. No separate VLESS or VMess configuration is required.</p>
-    <label><input type="checkbox" name="upstream_enabled" value="1" {{if .UpstreamEnabled}}checked{{end}}> استفاده از پراکسی بالادستی Use upstream proxy</label>
-    <label for="upstream_host">آدرس / IP پراکسی Proxy address / IP</label>
-    <input id="upstream_host" name="upstream_host" type="text" value="{{.UpstreamHost}}" dir="ltr" autocomplete="off" spellcheck="false">
-    <label for="upstream_port">پورت Port</label>
-    <input id="upstream_port" name="upstream_port" type="number" min="1" max="65535" value="{{.UpstreamPort}}" dir="ltr" inputmode="numeric">
-    <label for="upstream_username">نام کاربری (اختیاری) Username (optional)</label>
-    <input id="upstream_username" name="upstream_username" type="text" value="{{.UpstreamUsername}}" dir="ltr" autocomplete="username" spellcheck="false">
-    <label for="upstream_password">رمز عبور (اختیاری) Password (optional)</label>
-    <input id="upstream_password" name="upstream_password" type="password" value="" dir="ltr" autocomplete="new-password">
-    <p class="hint">اگر رمز قبلی تنظیم شده و این کادر خالی باشد، رمز قبلی حفظ می‌شود. If a password is already set and this field is empty, the existing password is kept.</p>
-  </fieldset>'''
-    new = '''  <fieldset class="upstream-box">
-    <legend>{{.T "upstream.title"}}</legend>
-    <p class="hint">{{.T "upstream.hint"}}</p>
-    <label><input type="checkbox" name="upstream_enabled" value="1" {{if .UpstreamEnabled}}checked{{end}}> {{.T "upstream.enabled"}}</label>
-    <label for="upstream_host">{{.T "upstream.host"}}</label>
-    <input id="upstream_host" name="upstream_host" type="text" value="{{.UpstreamHost}}" dir="ltr" autocomplete="off" spellcheck="false">
-    <label for="upstream_port">{{.T "upstream.port"}}</label>
-    <input id="upstream_port" name="upstream_port" type="number" min="1" max="65535" value="{{.UpstreamPort}}" dir="ltr" inputmode="numeric">
-    <label for="upstream_username">{{.T "upstream.username"}}</label>
-    <input id="upstream_username" name="upstream_username" type="text" value="{{.UpstreamUsername}}" dir="ltr" autocomplete="username" spellcheck="false">
-    <label for="upstream_password">{{.T "upstream.password"}}</label>
-    <input id="upstream_password" name="upstream_password" type="password" value="" dir="ltr" autocomplete="new-password">
-    <p class="hint">{{.T "upstream.password_hint"}}</p>
-  </fieldset>'''
-    if old not in text:
+    new = '''      <fieldset class="upstream-box">
+        <legend>{{.T "upstream.title"}}</legend>
+        <p class="hint">{{.T "upstream.hint"}}</p>
+        <label><input type="checkbox" name="upstream_enabled" value="1" {{if .UpstreamEnabled}}checked{{end}}> {{.T "upstream.enabled"}}</label>
+        <label for="upstream_host">{{.T "upstream.host"}}</label>
+        <input id="upstream_host" name="upstream_host" type="text" value="{{.UpstreamHost}}" dir="ltr" autocomplete="off" spellcheck="false">
+        <label for="upstream_port">{{.T "upstream.port"}}</label>
+        <input id="upstream_port" name="upstream_port" type="number" min="1" max="65535" value="{{.UpstreamPort}}" dir="ltr">
+        <label for="upstream_username">{{.T "upstream.username"}}</label>
+        <input id="upstream_username" name="upstream_username" type="text" value="{{.UpstreamUsername}}" dir="ltr" autocomplete="off">
+        <label for="upstream_password">{{.T "upstream.password"}}</label>
+        <input id="upstream_password" name="upstream_password" type="password" value="" dir="ltr" autocomplete="new-password">
+        <p class="hint">{{.T "upstream.password_hint"}}</p>
+      </fieldset>
+'''
+    pattern = r'(?m)^\s*<fieldset class="upstream-box">.*?^\s*</fieldset>\s*\n'
+    text2, count = re.subn(pattern, new, text, count=1, flags=re.S)
+    if count != 1:
         raise SystemExit("upstream template block not found")
-    template.write_text(text.replace(old, new, 1))
+    template.write_text(text2)
 
     messages = Path("internal/panel/i18n_messages.go")
     text = messages.read_text()
