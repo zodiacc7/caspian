@@ -551,7 +551,16 @@ type EngineLog struct {
 // than trusting the panel.
 //
 // It carries two credentials, so it redacts itself; see String below.
+type UpstreamProxySpec struct {
+	Enabled  bool
+	Host     string
+	Port     uint16
+	Username string
+	Password string
+}
+
 type StartRequest struct {
+	Upstream UpstreamProxySpec
 	// SpoofSNI is separate from the real TLS name in ConfigJSON.
 	SpoofSNI       string
 	TCPSplit       bool

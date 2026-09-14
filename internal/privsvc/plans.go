@@ -15,13 +15,41 @@ import (
 	"caspianbyoc.org/caspian/internal/xcfg"
 )
 
+// DHCP pool bounds, as offsets from the base of the hotspot subnet.
+//
+// The gateway is the first address in the subnet (netcfg.GatewayAddr), so the
+// pool starts well above it: internal/hotspot refuses a pool containing the
+// gateway, because handing the box's own address to a client makes two machines
+// answer for the router and takes the hotspot down in a way that looks
+// intermittent. The gap below the pool is where a static address can be set by
+// hand without colliding with a lease.
 const (
 	dhcpFirstOffset = 50
 	dhcpLastOffset  = 200
-	dhcpLeaseTime   = 12 * time.Hour
-	dnsCacheSize    = 150
+
+	// dhcpLeaseTime is long enough that a phone in a pocket keeps its address
+	// across a nap and short enough that a device that has left frees it the
+	// same day, which is what makes the panel's device count mean something.
+	dhcpLeaseTime = 12 * time.Hour
+
+	// dnsCacheSize is dnsmasq's answer cache. Every miss is a query that
+	// crosses the tunnel, so a cache is latency the user feels; it is small
+	// because the box serves a room, not a site.
+	dnsCacheSize = 150
 )
 
+// netOptionsFor applies the request's overrides to this service's options.
+//
+// Every override is one internal/netcfg already accepts, and each is passed
+// through rather than acted on here: the planner is what decides whether an
+// override can be honoured, and it has the wording for the refusal.
+//
+// socksPort is the loopback port this run's SOCKS inbound binds, chosen by
+// chooseSocksPort. It replaces the preferred port in the macOS SystemSOCKS
+// options, because those options become the networksetup steps that point
+// every network service at the inbound (internal/netcfg/system_socks.go,
+// darwinSystemSOCKSSteps), and a Mac pointed at 10808 while the engine
+// listens elsewhere is a Mac whose proxy setting reaches nothing.
 func (s *Service) netOptionsFor(req panel.StartRequest, socksPort uint16) (netcfg.Options, error) {
 	o := s.cfg.netOptions()
 	if o.SystemSOCKS.Enabled && socksPort != 0 {
@@ -31,10 +59,25 @@ func (s *Service) netOptionsFor(req panel.StartRequest, socksPort uint16) (netcf
 	if h := req.Hotspot.Interface; h != "" && !s.isVirtualAPName(h) {
 		o.HotspotOverride = h
 	}
+	// The band goes to the planner, because the planner is what picks the
+	// channel and only it can tell whether the radio has one in that band.
+	//
+	// This used to be applied AFTER the plan, below, by overwriting the band
+	// that the chosen channel implied. The two never had to agree, and when
+	// they disagreed hostapd was handed a contradiction: a 2.4GHz channel
+	// labelled 5GHz, which cannot work and surfaced as "the hotspot failed"
+	// with nothing pointing at the band. The user's explicit choice was
+	// silently replaced by a number picked for a different reason.
+	//
+	// The string values match hotspot.Band2GHz and hotspot.Band5GHz exactly,
+	// so this is a conversion and not a mapping table that could drift.
 	o.HotspotBand = netcfg.RadioBand(req.Hotspot.Band)
 	if req.Hotspot.Subnet != "" {
 		p, err := netip.ParsePrefix(req.Hotspot.Subnet)
 		if err != nil {
+			// validateStatic already refused this, so reaching it means the
+			// two disagree, which is a bug in this package rather than a bad
+			// request.
 			return o, fail("hotspot subnet", panel.FaultUnknown, err)
 		}
 		o.HotspotSubnet = p
@@ -42,19 +85,44 @@ func (s *Service) netOptionsFor(req panel.StartRequest, socksPort uint16) (netcf
 	return o, nil
 }
 
+// engineDocument composes the complete configuration the engine is started
+// with.
+//
+// What crossed the socket carries outbounds and nothing else. The inbound that
+// client traffic arrives on, the loopback diagnostics inbound, the local DNS
+// listener, the resolver policy and the routing rules are all decided HERE and
+// never taken from anything the caller sent: internal/xcfg owns their shape and
+// the order of the rules, which its own comments record as load bearing.
+//
+// The tunnel device name is the one value handed to both internal/netcfg and
+// internal/xcfg. They describe the same device: netcfg writes an address on it
+// and routes through it by name, and xcfg tells the engine to create it. A
+// drift between them is a tunnel the routes do not name, which presents as a
+// box that connects and carries nothing.
 func (s *Service) engineDocument(l *link.Link, req panel.StartRequest, netOpts netcfg.Options) ([]byte, error) {
 	o := xcfg.Defaults()
 	o.Link = l
 	o.TUN.Disabled = s.cfg.TUNDisabled
 	o.TUN.Name = netOpts.TunName
+	// The port this run chose, not the preferred one (socksport.go). This is
+	// the same value netOptionsFor gave the macOS system proxy steps and the
+	// same value Status reports as LocalProxy.
 	o.SOCKS.Port = s.socksPortInForce()
+
+	// The listener internal/hotspot's dnsmasq forwards to. Enabling it is what
+	// makes client DNS resolvable at all: with it off, dnsmasq forwards to a
+	// port nothing answers on and every joined device stops resolving while the
+	// hotspot and the tunnel both look healthy. docs/LAYOUT.md calls this "the
+	// pairing that breaks quietly", and hotspotPlanFor below is given the same
+	// port from the same field.
 	o.LocalDNS.Enabled = true
 	o.LocalDNS.Port = s.cfg.LocalDNSPort
+	// Apply the same interception policy on every implemented platform. This
+	// covers DNS entering Xray, including clients using a hardcoded resolver;
+	// OS-level DNS that never enters the tunnel needs backend enforcement too.
 	o.DNS.Intercept = true
 
-	// The optional front SOCKS5 is an outbound next hop. It is deliberately
-	// separate from the local SOCKS inbound above, so enabling it does not
-	// change Caspian's local control/listener port.
+	// Optional front SOCKS5 outbound. This is independent of the local SOCKS inbound.
 	o.Upstream = xcfg.UpstreamSOCKS5{
 		Enabled:  req.Upstream.Enabled,
 		Host:     req.Upstream.Host,
@@ -74,19 +142,42 @@ func (s *Service) engineDocument(l *link.Link, req panel.StartRequest, netOpts n
 	return doc, nil
 }
 
+// hotspotPlanFor turns the network plan into a fully rendered access point.
+//
+// Nothing here is invented. The interface, the channel and the subnet come from
+// the plan; the radio's limits are read back out of the facts the plan was made
+// from, rather than assumed; the passphrase and the name come from the request.
 func (s *Service) hotspotPlanFor(p *netcfg.Plan, f netcfg.Facts, req panel.StartRequest, country string) (hotspot.Plan, error) {
 	channel := p.Channel
 	if req.Hotspot.Channel != 0 && !p.ChannelPinned {
+		// validateAgainstPlan has already refused a channel the radio will not
+		// accept, and refused any override at all when the radio pins one.
 		channel = req.Hotspot.Channel
 	}
+	// The band comes from the channel, unconditionally. netcfg has already
+	// guaranteed the channel is in the requested band, or refused with a
+	// reason naming the band and the radio. Overriding it here is what created
+	// the contradiction this comment used to describe.
 	band := bandForChannel(channel)
 	if country == "" {
+		// hostapd with no country_code falls back to the world regulatory
+		// domain, where most channels are passive-scan only and beaconing is
+		// not permitted, so the access point starts and no network ever
+		// appears. internal/hotspot refuses it for that reason and this
+		// refusal happens earlier, before anything has been applied.
+		//
 		return hotspot.Plan{}, fail("country", panel.FaultCountryMissing,
 			errors.New("no country is set and the radio did not report one, so the hotspot cannot legally pick a channel"))
 	}
 
 	uplink := p.Uplink
 	if s.cfg.Backend.Platform() == netcfg.PlatformWindows {
+		// Mobile Hotspot's connection profile is its actual shared egress.
+		// Binding it to the physical uplink makes ICS bypass the host's default
+		// route and leaks client traffic outside xray0. The Windows start order
+		// creates and routes xray0 before the hotspot starts, so share that
+		// profile directly. The physical server route still keeps the tunnel's
+		// own connection off itself.
 		uplink = p.Tun
 	}
 	ap := hotspot.APConfig{
@@ -119,8 +210,10 @@ func (s *Service) hotspotPlanFor(p *netcfg.Plan, f netcfg.Facts, req panel.Start
 		RangeEnd:   last,
 		LeaseTime:  dhcpLeaseTime,
 		LeaseFile:  s.cfg.HotspotPaths.LeaseFile,
-		Upstream:   netip.AddrPortFrom(netip.MustParseAddr("127.0.0.1"), s.cfg.LocalDNSPort),
-		CacheSize:  dnsCacheSize,
+		// The same port engineDocument gave the engine's listener. One field,
+		// two consumers, so the pairing cannot drift.
+		Upstream:  netip.AddrPortFrom(netip.MustParseAddr("127.0.0.1"), s.cfg.LocalDNSPort),
+		CacheSize: dnsCacheSize,
 	}
 
 	newPlan := hotspot.NewPlan
@@ -132,4 +225,59 @@ func (s *Service) hotspotPlanFor(p *netcfg.Plan, f netcfg.Facts, req panel.Start
 		return hotspot.Plan{}, fail("hotspot configuration", hotspotFault(unitAP, err.Error(), err), err)
 	}
 	return plan, nil
+}
+
+// radioConstraintFor reads the radio's limits back out of the facts.
+//
+// internal/hotspot never asks the radio anything: it is given the answer and
+// its job is to refuse a configuration the radio cannot run, before hostapd is
+// started and fails in a way the user cannot read. This is where that answer
+// comes from.
+func radioConstraintFor(f netcfg.Facts, p *netcfg.Plan, channel int) hotspot.RadioConstraint {
+	phy, ok := f.PhyByName(p.HotspotPhy)
+	if !ok {
+		// The planner chose this radio out of this same Facts value, so a
+		// miss here means the two disagree. Reporting no AP support makes
+		// internal/hotspot refuse with the sentence for the user rather than
+		// letting an empty constraint pass everything.
+		return hotspot.RadioConstraint{}
+	}
+	_, combo := phy.APWithStation()
+	maxAPs := 0
+	for _, lim := range combo.Limits {
+		if lim.Has("AP") && lim.Max > maxAPs {
+			maxAPs = lim.Max
+		}
+	}
+	if maxAPs == 0 && phy.SupportsAP() {
+		// The radio lists AP among its modes but no combination names it,
+		// which is the shape of a radio that can be an access point on its own
+		// and not beside anything.
+		maxAPs = 1
+	}
+	rc := hotspot.RadioConstraint{
+		SupportsAP:      phy.SupportsAP(),
+		MaxAPs:          maxAPs,
+		MaxChannels:     combo.Channels,
+		AllowedChannels: phy.UsableChannels(),
+	}
+	if p.ChannelPinned {
+		rc.ClientChannel = channel
+	}
+	return rc
+}
+
+// nthAddress returns the nth host address inside a prefix.
+func nthAddress(p netip.Prefix, n int) (netip.Addr, error) {
+	if !p.IsValid() {
+		return netip.Addr{}, errors.New("privsvc: the hotspot subnet is not a network")
+	}
+	a := p.Masked().Addr()
+	for i := 0; i < n; i++ {
+		a = a.Next()
+		if !a.IsValid() || !p.Contains(a) {
+			return netip.Addr{}, errors.New("privsvc: the hotspot subnet is too small for a DHCP pool")
+		}
+	}
+	return a, nil
 }

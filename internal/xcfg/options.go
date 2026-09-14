@@ -5,6 +5,7 @@ package xcfg
 
 import (
 	"net/netip"
+	"strings"
 
 	"caspianbyoc.org/caspian/internal/link"
 )
@@ -32,6 +33,8 @@ const (
 	// LocalDNS.Enabled or DNS.Intercept is set, since both need something to
 	// answer with.
 	TagDNSOut = "dns-out"
+
+	TagUpstream = "upstream-socks5"
 
 	// TagTUNIn is the TUN inbound: client traffic.
 	TagTUNIn = "tun-in"
@@ -265,6 +268,15 @@ type Options struct {
 	SOCKS    SOCKS
 	DNS      DNS
 	LocalDNS LocalDNS
+	Upstream UpstreamSOCKS5
+}
+
+type UpstreamSOCKS5 struct {
+	Enabled  bool
+	Host     string
+	Port     uint16
+	Username string
+	Password string
 }
 
 // DefaultSocksPort is the loopback proxy and diagnostics port.
@@ -362,11 +374,22 @@ func (o Options) normalise() Options {
 	if o.LocalDNS.Port == 0 {
 		o.LocalDNS.Port = DefaultLocalDNSPort
 	}
+	if o.Upstream.Enabled {
+		o.Upstream.Host = strings.TrimSpace(o.Upstream.Host)
+	}
 	return o
 }
 
 // check validates a normalised Options. Errors name the field, never a value.
 func (o Options) check() error {
+	if o.Upstream.Enabled {
+		if o.Upstream.Host == "" || strings.ContainsAny(o.Upstream.Host, " \t\r\n") {
+			return ErrUpstreamAddress
+		}
+		if o.Upstream.Port == 0 {
+			return ErrUpstreamPort
+		}
+	}
 	switch o.LogLevel {
 	case LogDebug, LogInfo, LogWarning, LogError:
 	default:

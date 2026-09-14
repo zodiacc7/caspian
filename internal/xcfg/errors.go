@@ -14,6 +14,8 @@ import "errors"
 // at fault the error says WHICH element by position, because an index is not
 // credential material and "the third resolver" is the whole diagnosis.
 var (
+	ErrUpstreamAddress = errors.New("the upstream SOCKS5 address is invalid")
+	ErrUpstreamPort = errors.New("the upstream SOCKS5 port is invalid")
 	// ErrNoLink means Build was called without a parsed link. Use
 	// BuildFailClosed for the no-config case; it is not the same document and
 	// silently substituting one for the other would hide a bug behind a

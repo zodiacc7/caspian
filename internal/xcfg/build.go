@@ -151,6 +151,27 @@ type dnsOutbound struct {
 	Settings dnsOutSettings `json:"settings"`
 }
 
+type socksOutbound struct {
+	Tag      string                `json:"tag"`
+	Protocol string                `json:"protocol"`
+	Settings socksOutboundSettings `json:"settings"`
+}
+
+type socksOutboundSettings struct {
+	Servers []socksOutboundServer `json:"servers"`
+}
+
+type socksOutboundServer struct {
+	Address string              `json:"address"`
+	Port    uint16              `json:"port"`
+	Users   []socksOutboundUser `json:"users,omitempty"`
+}
+
+type socksOutboundUser struct {
+	User string `json:"user"`
+	Pass string `json:"pass"`
+}
+
 // dnsOutSettings is the subset of infra/conf.DNSOutboundConfig,
 // infra/conf/dns_proxy.go:10-17.
 //
@@ -194,6 +215,9 @@ func Build(o Options) ([]byte, error) {
 	// hands any connection no rule matched to it. Whatever is first is what
 	// carries traffic when the rules are wrong, so it is the tunnel.
 	outbounds = append(outbounds, proxy)
+	if o.Upstream.Enabled {
+		outbounds = append(outbounds, upstreamSOCKS(o.Upstream))
+	}
 	outbounds = append(outbounds, direct(), blackhole())
 	if o.DNS.Intercept || o.LocalDNS.Enabled {
 		outbounds = append(outbounds, dnsOut())
@@ -259,9 +283,14 @@ func Build(o Options) ([]byte, error) {
 	// a nil list, so a catch-all with no network would leave every UDP flow
 	// unmatched.
 	rules = append(rules, rule{
-		RuleTag:     ruleTagCatchAll,
-		Network:     "tcp,udp",
-		OutboundTag: TagProxy,
+		RuleTag: ruleTagCatchAll,
+		Network: "tcp,udp",
+		OutboundTag: func() string {
+			if o.Upstream.Enabled {
+				return TagUpstream
+			}
+			return TagProxy
+		}(),
 	})
 
 	return assemble(o, outbounds, rules)
@@ -476,6 +505,18 @@ func dnsOut() dnsOutbound {
 		Tag:      TagDNSOut,
 		Protocol: "dns",
 		Settings: dnsOutSettings{NonIPQuery: "reject"},
+	}
+}
+
+func upstreamSOCKS(u UpstreamSOCKS5) socksOutbound {
+	s := socksOutboundServer{Address: u.Host, Port: u.Port}
+	if u.Username != "" || u.Password != "" {
+		s.Users = []socksOutboundUser{{User: u.Username, Pass: u.Password}}
+	}
+	return socksOutbound{
+		Tag:      TagUpstream,
+		Protocol: "socks",
+		Settings: socksOutboundSettings{Servers: []socksOutboundServer{s}},
 	}
 }
 
