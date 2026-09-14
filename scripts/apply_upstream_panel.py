@@ -3,17 +3,9 @@ from pathlib import Path
 def patch(path, replacements):
     p=Path(path); s=p.read_text()
     for old,new in replacements:
-        if old not in s: raise SystemExit(f'marker not found in {path}: {old[:80]!r}')
+        if old not in s: raise SystemExit(f'marker not found in {path}: {old[:100]!r}')
         s=s.replace(old,new,1)
     p.write_text(s)
-
-patch('internal/state/state.go', [
- ('const CurrentVersion = 5','const CurrentVersion = 6'),
- ('\tClientIPv6 string `json:"client_ipv6"`\n','''\tClientIPv6 string `json:"client_ipv6"`\n\n\tUpstreamEnabled  bool   `json:"upstream_enabled,omitempty"`\n\tUpstreamHost     string `json:"upstream_host,omitempty"`\n\tUpstreamPort     uint16 `json:"upstream_port,omitempty"`\n\tUpstreamUsername Secret `json:"upstream_username,omitempty"`\n\tUpstreamPassword Secret `json:"upstream_password,omitempty"`\n''')])
-
-patch('internal/state/migrate.go', [
- ('\t4: migrateV4ToV5,\n','\t4: migrateV4ToV5,\n\t5: migrateV5ToV6,\n'),
- ('func migrateV4ToV5(st *State) error {\n\tst.Proxy.TCPSplit = false\n\tst.Proxy.TLSRecordSplit = false\n\tst.Version = 5\n\treturn nil\n}\n','''func migrateV4ToV5(st *State) error {\n\tst.Proxy.TCPSplit = false\n\tst.Proxy.TLSRecordSplit = false\n\tst.Version = 5\n\treturn nil\n}\n\nfunc migrateV5ToV6(st *State) error {\n\tst.Version = 6\n\treturn nil\n}\n''')])
 
 patch('internal/panel/handlers.go', [
  ('\t\tConfigJSON:     cfgJSON,\n\t\tHotspot: HotspotSpec{','''\t\tConfigJSON: cfgJSON,\n\t\tUpstream: UpstreamProxySpec{\n\t\t\tEnabled: st.Advanced.UpstreamEnabled, Host: st.Advanced.UpstreamHost,\n\t\t\tPort: st.Advanced.UpstreamPort, Username: st.Advanced.UpstreamUsername.Reveal(),\n\t\t\tPassword: st.Advanced.UpstreamPassword.Reveal(),\n\t\t},\n\t\tHotspot: HotspotSpec{'''),
@@ -29,4 +21,4 @@ marker='      <button type="submit" class="go">{{.T "advanced.save"}}</button>'
 block='''      <fieldset class="upstream-box">\n        <legend>{{if eq .Dir "rtl"}}پراکسی بالادستی SOCKS5{{else}}Upstream SOCKS5 proxy{{end}}</legend>\n        <p class="hint">{{if eq .Dir "rtl"}}اختیاری است؛ ترافیک کاسپین ابتدا به این SOCKS5 می‌رود و نیازی به VLESS یا VMess جداگانه نیست.{{else}}Optional; Caspian sends traffic to this SOCKS5 first. No separate VLESS or VMess configuration is required.{{end}}</p>\n        <label><input type="checkbox" name="upstream_enabled" value="1" {{if .UpstreamEnabled}}checked{{end}}> {{if eq .Dir "rtl"}}استفاده از پراکسی بالادستی{{else}}Use upstream proxy{{end}}</label>\n        <label for="upstream_host">{{if eq .Dir "rtl"}}آدرس / IP پراکسی{{else}}Proxy address / IP{{end}}</label>\n        <input id="upstream_host" name="upstream_host" type="text" value="{{.UpstreamHost}}" dir="ltr" autocomplete="off" spellcheck="false">\n        <label for="upstream_port">{{if eq .Dir "rtl"}}پورت{{else}}Port{{end}}</label>\n        <input id="upstream_port" name="upstream_port" type="number" min="1" max="65535" value="{{.UpstreamPort}}" dir="ltr">\n        <label for="upstream_username">{{if eq .Dir "rtl"}}نام کاربری (اختیاری){{else}}Username (optional){{end}}</label>\n        <input id="upstream_username" name="upstream_username" type="text" value="{{.UpstreamUsername}}" dir="ltr" autocomplete="off">\n        <label for="upstream_password">{{if eq .Dir "rtl"}}رمز عبور (اختیاری){{else}}Password (optional){{end}}</label>\n        <input id="upstream_password" name="upstream_password" type="password" value="" dir="ltr" autocomplete="new-password">\n        <p class="hint">{{if eq .Dir "rtl"}}اگر رمز قبلی تنظیم شده و این کادر خالی باشد، رمز قبلی حفظ می‌شود.{{else}}If a password is already set and this field is empty, the existing password is kept.{{end}}</p>\n      </fieldset>\n\n'''+marker
 if marker not in s: raise SystemExit('advanced template marker not found')
 p.write_text(s.replace(marker,block,1))
-print('panel/state patch applied')
+print('panel patch applied')
