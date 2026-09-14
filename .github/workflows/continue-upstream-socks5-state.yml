@@ -1,0 +1,46 @@
+name: Continue upstream SOCKS5 state
+on: push
+permissions:
+  contents: write
+jobs:
+  state:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch state schema and migration
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('internal/state/state.go')
+          s = p.read_text()
+          if 'const CurrentVersion = 5' in s:
+              s = s.replace('const CurrentVersion = 5', 'const CurrentVersion = 6', 1)
+          marker = '\t// EngineLogLevel is the xray-core log level.'
+          fields = '''\t// Optional front SOCKS5 proxy used before the main proxy outbound.\n\t// Credentials are Secret values so they remain redacted by fmt.\n\tUpstreamEnabled  bool   `json:"upstream_enabled,omitempty"`\n\tUpstreamHost     string `json:"upstream_host,omitempty"`\n\tUpstreamPort     uint16 `json:"upstream_port,omitempty"`\n\tUpstreamUsername Secret `json:"upstream_username,omitempty"`\n\tUpstreamPassword Secret `json:"upstream_password,omitempty"`\n\n'''
+          if 'UpstreamEnabled  bool' not in s:
+              if marker not in s:
+                  raise SystemExit('state insertion marker not found')
+              s = s.replace(marker, fields + marker, 1)
+          p.write_text(s)
+
+          p = Path('internal/state/migrate.go')
+          s = p.read_text()
+          if '\t5: migrateV5ToV6,' not in s:
+              s = s.replace('\t4: migrateV4ToV5,\n', '\t4: migrateV4ToV5,\n\t5: migrateV5ToV6,\n', 1)
+          if 'func migrateV5ToV6(' not in s:
+              s += '''\n// migrateV5ToV6 adds the optional upstream SOCKS5 settings.\n// Older state has no such keys, so the zero values intentionally mean disabled.\nfunc migrateV5ToV6(st *State) error {\n\tst.Version = 6\n\treturn nil\n}\n'''
+          p.write_text(s)
+          PY
+      - name: Format and test
+        run: |
+          gofmt -w internal/state/state.go internal/state/migrate.go
+          go test ./internal/state ./internal/xcfg ./internal/privsvc
+      - name: Commit
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add internal/state/state.go internal/state/migrate.go
+          git commit -m 'feat: persist upstream SOCKS5 settings'
+          git push
