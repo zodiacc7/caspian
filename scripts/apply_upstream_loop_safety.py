@@ -9,13 +9,7 @@ def replace_once(path, old, new):
     p.write_text(s.replace(old, new, 1))
 
 
-# Keep the upstream SOCKS endpoint itself out of the catch-all/upstream route.
-# Literal IPs are matched as IP rules; hostnames are matched as exact domains.
-replace_once(
-    "internal/xcfg/build.go",
-    '"encoding/json"\n',
-    '"encoding/json"\n\t"net/netip"\n',
-)
+replace_once("internal/xcfg/build.go", '"encoding/json"\n', '"encoding/json"\n\t"net/netip"\n')
 replace_once(
     "internal/xcfg/build.go",
     '\tRuleTag     string   `json:"ruleTag"`\n\tInboundTag  []string `json:"inboundTag,omitempty"`\n\tIP          []string `json:"ip,omitempty"`\n',
@@ -32,11 +26,10 @@ replace_once(
     '\truleTagDNS          = "client-dns-intercept"\n\truleTagUpstreamDirect = "upstream-socks5-direct"\n\truleTagCatchAll       = "everything-else"\n',
 )
 
-# Extend structural test decoding and option coverage.
 replace_once(
     "internal/xcfg/build_test.go",
-    '\t\t\t\tRuleTag     string   `json:"ruleTag"`\n\t\t\t\tInboundTag  []string `json:"inboundTag"`\n\t\t\t\tIP          []string `json:"ip"`\n',
-    '\t\t\t\tRuleTag     string   `json:"ruleTag"`\n\t\t\t\tInboundTag  []string `json:"inboundTag"`\n\t\t\t\tDomain      []string `json:"domain"`\n\t\t\t\tIP          []string `json:"ip"`\n',
+    '\t\t\tRuleTag     string   `json:"ruleTag"`\n\t\t\tInboundTag  []string `json:"inboundTag"`\n\t\t\tIP          []string `json:"ip"`\n',
+    '\t\t\tRuleTag     string   `json:"ruleTag"`\n\t\t\tInboundTag  []string `json:"inboundTag"`\n\t\t\tDomain      []string `json:"domain"`\n\t\t\tIP          []string `json:"ip"`\n',
 )
 replace_once(
     "internal/xcfg/build_test.go",
@@ -54,19 +47,11 @@ replace_once(
     '''\tcase "LocalDNS.Port":\n\t\treturn fmt.Sprint(o.LocalDNS.Port)\n\tcase "Upstream.Enabled":\n\t\treturn fmt.Sprint(o.Upstream.Enabled)\n\tcase "Upstream.Host":\n\t\treturn o.Upstream.Host\n\tcase "Upstream.Port":\n\t\treturn fmt.Sprint(o.Upstream.Port)\n\tcase "Upstream.Username":\n\t\treturn o.Upstream.Username\n\tcase "Upstream.Password":\n\t\treturn o.Upstream.Password\n''',
 )
 
-# Add explicit loop-safety property tests before the named-properties section.
 marker = '// ---------------------------------------------------------------------------\n// The named properties.\n// ---------------------------------------------------------------------------\n'
-new_tests = r'''// TestUpstreamEndpointBypassesUpstreamRoute proves the endpoint itself is
-// routed direct. Otherwise a TUN route can feed the connection to the same
-// upstream SOCKS outbound it is trying to reach, creating a recursion loop.
+new_tests = r'''// TestUpstreamEndpointBypassesUpstreamRoute proves the endpoint itself is routed direct.
 func TestUpstreamEndpointBypassesUpstreamRoute(t *testing.T) {
 	l := mustParse(t, fixtures()[0].raw())
-	cases := []struct {
-		name string
-		host string
-		wantIP string
-		wantDomain string
-	}{
+	cases := []struct { name, host, wantIP, wantDomain string }{
 		{name: "loopback-v4", host: "127.0.0.1", wantIP: "127.0.0.1"},
 		{name: "lan-v4", host: "192.168.1.100", wantIP: "192.168.1.100"},
 		{name: "loopback-v6", host: "::1", wantIP: "::1"},
@@ -74,28 +59,18 @@ func TestUpstreamEndpointBypassesUpstreamRoute(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			o := Defaults()
-			o.Link = l
+			o := Defaults(); o.Link = l
 			o.Upstream = UpstreamSOCKS5{Enabled: true, Host: tc.host, Port: 3067}
-			raw, err := Build(o)
-			if err != nil { t.Fatal(err) }
+			raw, err := Build(o); if err != nil { t.Fatal(err) }
 			p := decode(t, raw)
-			var got *struct {
-				Domain []string
-				IP []string
-				OutboundTag string
+			var gotDomain, gotIP []string; var gotOutbound string
+			for _, r := range p.Routing.Rules {
+				if r.RuleTag == ruleTagUpstreamDirect { gotDomain, gotIP, gotOutbound = r.Domain, r.IP, r.OutboundTag; break }
 			}
-			for i := range p.Routing.Rules {
-				r := &p.Routing.Rules[i]
-				if r.RuleTag == ruleTagUpstreamDirect {
-					got = &struct { Domain []string; IP []string; OutboundTag string }{r.Domain, r.IP, r.OutboundTag}
-					break
-				}
-			}
-			if got == nil { t.Fatalf("missing %q rule", ruleTagUpstreamDirect) }
-			if got.OutboundTag != TagDirect { t.Fatalf("endpoint outbound = %q, want %q", got.OutboundTag, TagDirect) }
-			if tc.wantIP != "" && (len(got.IP) != 1 || got.IP[0] != tc.wantIP) { t.Fatalf("endpoint IP rule = %#v, want [%q]", got.IP, tc.wantIP) }
-			if tc.wantDomain != "" && (len(got.Domain) != 1 || got.Domain[0] != tc.wantDomain) { t.Fatalf("endpoint domain rule = %#v, want [%q]", got.Domain, tc.wantDomain) }
+			if gotOutbound == "" { t.Fatalf("missing %q rule", ruleTagUpstreamDirect) }
+			if gotOutbound != TagDirect { t.Fatalf("endpoint outbound = %q, want %q", gotOutbound, TagDirect) }
+			if tc.wantIP != "" && (len(gotIP) != 1 || gotIP[0] != tc.wantIP) { t.Fatalf("endpoint IP rule = %#v, want [%q]", gotIP, tc.wantIP) }
+			if tc.wantDomain != "" && (len(gotDomain) != 1 || gotDomain[0] != tc.wantDomain) { t.Fatalf("endpoint domain rule = %#v, want [%q]", gotDomain, tc.wantDomain) }
 		})
 	}
 }
