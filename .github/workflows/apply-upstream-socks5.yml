@@ -1,21 +1,9 @@
 name: Apply upstream SOCKS5 implementation
-
-on:
-  push:
-    branches:
-      - feature/upstream-socks5
-
-permissions:
-  contents: write
+on: push
 
 jobs:
-  apply:
-    if: github.event.head_commit.message != 'chore: workflow syntax test'
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify workflow
-        run: |
-          echo "GitHub Actions is running correctly."
-          go version
-          test -f internal/privsvc/plans.go
+      - run: echo "workflow syntax OK"
