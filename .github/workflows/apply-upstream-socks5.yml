@@ -32,36 +32,11 @@ jobs:
           if marker not in s:
               raise SystemExit("plans marker not found")
           p.write_text(s.replace(marker, block, 1))
-          priv = Path("internal/panel/priv.go")
-          s = priv.read_text()
-          if "type UpstreamProxySpec struct" not in s:
-              marker = "type StartRequest struct {\n"
-              addition = '''type UpstreamProxySpec struct {
-          \tEnabled bool
-          \tHost string
-          \tPort uint16
-          \tUsername string
-          \tPassword string
-          }
-
-          type StartRequest struct {
-          '''
-              if marker not in s:
-                  raise SystemExit("StartRequest marker not found")
-              s = s.replace(marker, addition, 1)
-              s = s.replace("type StartRequest struct {\n", "type StartRequest struct {\n\tUpstream UpstreamProxySpec\n", 1)
-              priv.write_text(s)
           PY
-      - name: Apply state and panel
-        run: python3 scripts/apply_upstream_panel.py
-      - name: Localize upstream panel
-        run: python3 scripts/fix_upstream_panel_i18n.py
       - name: Apply upstream loop safety
         run: python3 scripts/apply_upstream_loop_safety.py
       - name: Format
         run: gofmt -w internal/state/state.go internal/state/migrate.go internal/xcfg/options.go internal/xcfg/build.go internal/xcfg/build_test.go internal/privsvc/plans.go internal/panel/priv.go internal/panel/handlers.go internal/panel/view.go internal/panel/i18n.go internal/panel/i18n_messages.go
-      - name: Update panel goldens
-        run: bash scripts/golden-update.sh
       - name: Test
         run: go test ./internal/state ./internal/xcfg ./internal/privsvc ./internal/panel
       - name: Commit patch
