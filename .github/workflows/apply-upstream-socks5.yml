@@ -1,9 +1,26 @@
 name: Apply upstream SOCKS5 implementation
 on: push
 
+permissions:
+  contents: write
+
 jobs:
-  test:
+  apply:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "workflow syntax OK"
+      - name: Apply core patch
+        run: python3 scripts/apply_upstream_socks5.py
+      - name: Test
+        run: go test ./internal/xcfg ./internal/privsvc
+      - name: Commit patch
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add internal/xcfg internal/privsvc
+          git commit -m "feat: add upstream SOCKS5 core support"
+          git push
