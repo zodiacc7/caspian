@@ -1,0 +1,317 @@
+name: Apply upstream SOCKS5 implementation
+on:
+  push:
+    branches: [feature/upstream-socks5]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.event.head_commit.message != 'feat: add upstream SOCKS5 front proxy'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch implementation
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          def edit(path, old, new, count=1):
+              p=Path(path); s=p.read_text()
+              if old not in s:
+                  raise SystemExit(f'missing patch anchor in {path}: {old[:100]!r}')
+              p.write_text(s.replace(old,new,count))
+
+          p='internal/xcfg/options.go'
+          edit(p, 'import (\n\t"net/netip"', 'import (\n\t"net/netip"\n\t"strings"')
+          edit(p, '\tLocalDNS LocalDNS\n}\n', '''\tLocalDNS LocalDNS
+\t// Upstream is an optional front SOCKS5 proxy. It is separate from the
+\t// local SOCKS inbound.
+\tUpstream UpstreamSOCKS5
+}\n
+// UpstreamSOCKS5 configures an optional front/next-hop SOCKS5 server.
+type UpstreamSOCKS5 struct {
+\tEnabled  bool
+\tHost     string
+\tPort     uint16
+\tUsername string
+\tPassword string
+}
+''')
+          edit(p, '\tTagDNSOut = "dns-out"\n', '\tTagDNSOut = "dns-out"\n\n\t// TagUpstream is the optional front SOCKS5 outbound.\n\tTagUpstream = "upstream-socks5"\n')
+          edit(p, '\tif o.LocalDNS.Port == 0 {\n\t\to.LocalDNS.Port = DefaultLocalDNSPort\n\t}\n\treturn o\n}', '''\tif o.LocalDNS.Port == 0 {
+\t\to.LocalDNS.Port = DefaultLocalDNSPort
+\t}
+\tif o.Upstream.Enabled {
+\t\to.Upstream.Host = strings.TrimSpace(o.Upstream.Host)
+\t}
+\treturn o
+}''')
+          edit(p, '\tif o.LocalDNS.Enabled {', '''\tif o.Upstream.Enabled {
+\t\tif o.Upstream.Host == "" || strings.ContainsAny(o.Upstream.Host, " \\t\\r\\n") {
+\t\t\treturn ErrUpstreamAddress
+\t\t}
+\t\tif o.Upstream.Port == 0 {
+\t\t\treturn ErrUpstreamPort
+\t\t}
+\t}
+\tif o.LocalDNS.Enabled {''', 1)
+
+          p='internal/xcfg/errors.go'
+          s=Path(p).read_text()
+          if 'ErrUpstreamAddress' not in s:
+              marker='var (\n'; idx=s.index(marker)+len(marker)
+              s=s[:idx]+'\tErrUpstreamAddress = errors.New("the upstream SOCKS5 address is invalid")\n\tErrUpstreamPort = errors.New("the upstream SOCKS5 port is invalid")\n'+s[idx:]
+              Path(p).write_text(s)
+
+          p='internal/xcfg/build.go'
+          edit(p, '''type dnsOutbound struct {
+\tTag      string         `json:"tag"`
+\tProtocol string         `json:"protocol"`
+\tSettings dnsOutSettings `json:"settings"`
+}
+''', '''type dnsOutbound struct {
+\tTag      string         `json:"tag"`
+\tProtocol string         `json:"protocol"`
+\tSettings dnsOutSettings `json:"settings"`
+}
+
+type socksOutbound struct {
+\tTag      string                `json:"tag"`
+\tProtocol string                `json:"protocol"`
+\tSettings socksOutboundSettings `json:"settings"`
+}
+
+type socksOutboundSettings struct {
+\tServers []socksOutboundServer `json:"servers"`
+}
+
+type socksOutboundServer struct {
+\tAddress string              `json:"address"`
+\tPort    uint16              `json:"port"`
+\tUsers   []socksOutboundUser `json:"users,omitempty"`
+}
+
+type socksOutboundUser struct {
+\tUser string `json:"user"`
+\tPass string `json:"pass"`
+}
+''')
+          edit(p, '''\toutbounds = append(outbounds, proxy)
+\toutbounds = append(outbounds, direct(), blackhole())
+\tif o.DNS.Intercept || o.LocalDNS.Enabled {''', '''\toutbounds = append(outbounds, proxy)
+\tif o.Upstream.Enabled {
+\t\toutbounds = append(outbounds, upstreamSOCKS(o.Upstream))
+\t}
+\toutbounds = append(outbounds, direct(), blackhole())
+\tif o.DNS.Intercept || o.LocalDNS.Enabled {''')
+          edit(p, '''\t\trule{\n\t\t\tRuleTag:     ruleTagCatchAll,\n\t\t\tNetwork:     "tcp,udp",\n\t\t\tOutboundTag: TagProxy,\n\t\t})''', '''\t\trule{
+\t\t\tRuleTag:     ruleTagCatchAll,
+\t\t\tNetwork:     "tcp,udp",
+\t\t\tOutboundTag: func() string { if o.Upstream.Enabled { return TagUpstream }; return TagProxy }(),
+\t\t})''')
+          edit(p, '''func dnsOut() dnsOutbound {
+\treturn dnsOutbound{
+\t\tTag:      TagDNSOut,
+\t\tProtocol: "dns",
+\t\tSettings: dnsOutSettings{NonIPQuery: "reject"},
+\t}
+}
+''', '''func dnsOut() dnsOutbound {
+\treturn dnsOutbound{
+\t\tTag:      TagDNSOut,
+\t\tProtocol: "dns",
+\t\tSettings: dnsOutSettings{NonIPQuery: "reject"},
+\t}
+}
+
+func upstreamSOCKS(u UpstreamSOCKS5) socksOutbound {
+\ts := socksOutboundServer{Address: u.Host, Port: u.Port}
+\tif u.Username != "" || u.Password != "" {
+\t\ts.Users = []socksOutboundUser{{User: u.Username, Pass: u.Password}}
+\t}
+\treturn socksOutbound{Tag: TagUpstream, Protocol: "socks", Settings: socksOutboundSettings{Servers: []socksOutboundServer{s}}}
+}
+''')
+
+          p='internal/state/state.go'
+          edit(p, 'const CurrentVersion = 5', 'const CurrentVersion = 6')
+          edit(p, '\tPanelOnLAN bool `json:"panel_on_lan,omitempty"`\n}', '''\tPanelOnLAN bool `json:"panel_on_lan,omitempty"`
+
+\t// Optional front SOCKS5 proxy.
+\tUpstreamEnabled  bool   `json:"upstream_enabled,omitempty"`
+\tUpstreamHost     string `json:"upstream_host,omitempty"`
+\tUpstreamPort     uint16 `json:"upstream_port,omitempty"`
+\tUpstreamUsername Secret `json:"upstream_username,omitempty"`
+\tUpstreamPassword Secret `json:"upstream_password,omitempty"`
+}''')
+
+          p='internal/state/migrate.go'
+          edit(p, '\t4: migrateV4ToV5,\n}', '\t4: migrateV4ToV5,\n\t5: migrateV5ToV6,\n}')
+          edit(p, '''func migrateV4ToV5(st *State) error {
+\tst.Proxy.TCPSplit = false
+\tst.Proxy.TLSRecordSplit = false
+\tst.Version = 5
+\treturn nil
+}
+''', '''func migrateV4ToV5(st *State) error {
+\tst.Proxy.TCPSplit = false
+\tst.Proxy.TLSRecordSplit = false
+\tst.Version = 5
+\treturn nil
+}
+
+// migrateV5ToV6 adds the optional front SOCKS5 proxy, disabled by default.
+func migrateV5ToV6(st *State) error {
+\tst.Version = 6
+\treturn nil
+}
+''')
+
+          p='internal/panel/priv.go'
+          edit(p, '''\tEngineLogLevel string
+}
+''', '''\tEngineLogLevel string
+
+\tUpstream UpstreamProxySpec
+}
+
+type UpstreamProxySpec struct {
+\tEnabled  bool
+\tHost     string
+\tPort     uint16
+\tUsername string
+\tPassword string
+}
+''')
+          edit(p, '''func (r StartRequest) String() string {
+\treturn fmt.Sprintf("start config=[redacted %d bytes] %v network=%+v engine_log_level=%q",
+\t\tlen(r.ConfigJSON), r.Hotspot, r.Network, r.EngineLogLevel)
+}''', '''func (r StartRequest) String() string {
+\treturn fmt.Sprintf("start config=[redacted %d bytes] %v network=%+v upstream_enabled=%t upstream=%s:%d upstream_credentials=[redacted] engine_log_level=%q",
+\t\tlen(r.ConfigJSON), r.Hotspot, r.Network, r.Upstream.Enabled, r.Upstream.Host, r.Upstream.Port, r.EngineLogLevel)
+}''')
+
+          p='internal/panel/handlers.go'
+          edit(p, '''\t\tEngineLogLevel: st.Advanced.EngineLogLevel,
+\t}''', '''\t\tEngineLogLevel: st.Advanced.EngineLogLevel,
+\t\tUpstream: UpstreamProxySpec{
+\t\t\tEnabled:  st.Advanced.UpstreamEnabled,
+\t\t\tHost:     st.Advanced.UpstreamHost,
+\t\t\tPort:     st.Advanced.UpstreamPort,
+\t\t\tUsername: st.Advanced.UpstreamUsername.Reveal(),
+\t\t\tPassword: st.Advanced.UpstreamPassword.Reveal(),
+\t\t},
+\t}''')
+          edit(p, '''\tconnectionsOnly := r.PostFormValue("connections_only") == "1"
+''', '''\tconnectionsOnly := r.PostFormValue("connections_only") == "1"
+\tupstreamEnabled := r.PostFormValue("upstream_enabled") == "1"
+\tupstreamHost := strings.TrimSpace(r.PostFormValue("upstream_host"))
+\tupstreamPort := 0
+\tif v := strings.TrimSpace(r.PostFormValue("upstream_port")); v != "" {
+\t\tn, convErr := strconv.Atoi(v)
+\t\tif convErr != nil || n < 1 || n > 65535 {
+\t\t\tsess.setFlash(Problem{Headline: "upstream port is invalid"}, "")
+\t\t\tp.home(w, r)
+\t\t\treturn
+\t\t}
+\t\tupstreamPort = n
+\t}
+\tupstreamUser := r.PostFormValue("upstream_username")
+\tupstreamPass := r.PostFormValue("upstream_password")
+\tif upstreamEnabled && (upstreamHost == "" || upstreamPort == 0 || strings.ContainsAny(upstreamHost, " \\t\\r\\n")) {
+\t\tsess.setFlash(Problem{Headline: "upstream proxy address and port are required"}, "")
+\t\tp.home(w, r)
+\t\treturn
+\t}
+''')
+          edit(p, '''\t\tst.Advanced.EngineLogLevel = logLevel
+\t\tst.Advanced.PanelOnLAN = onLAN
+\t\treturn nil
+''', '''\t\tst.Advanced.EngineLogLevel = logLevel
+\t\tst.Advanced.PanelOnLAN = onLAN
+\t\tif !connectionsOnly {
+\t\t\tst.Advanced.UpstreamEnabled = upstreamEnabled
+\t\t\tst.Advanced.UpstreamHost = upstreamHost
+\t\t\tst.Advanced.UpstreamPort = uint16(upstreamPort)
+\t\t\tst.Advanced.UpstreamUsername = state.Secret(upstreamUser)
+\t\t\tif upstreamPass != "" {
+\t\t\t\tst.Advanced.UpstreamPassword = state.Secret(upstreamPass)
+\t\t\t}
+\t\t}
+\t\treturn nil
+''')
+
+          p='internal/panel/view.go'
+          edit(p, '''\tEngineDropped int
+''', '''\tEngineDropped int
+\n\tUpstreamEnabled  bool
+\tUpstreamHost     LTR
+\tUpstreamPort     LTR
+\tUpstreamUsername string
+''')
+          edit(p, '''\td.EngineDropped = int(log.Dropped)
+}''', '''\td.EngineDropped = int(log.Dropped)
+\td.UpstreamEnabled = adv.UpstreamEnabled
+\td.UpstreamHost = LTR(adv.UpstreamHost)
+\tif adv.UpstreamPort != 0 {
+\t\td.UpstreamPort = LTR(strconv.Itoa(int(adv.UpstreamPort)))
+\t}
+\td.UpstreamUsername = adv.UpstreamUsername.Reveal()
+}''')
+
+          p='internal/panel/templates/index.html'
+          edit(p, '''    <h3>{{.T "advanced.recover.heading"}}</h3>''', '''    <h3>{{.T "upstream.heading"}}</h3>
+    <p class="hint">{{.T "upstream.hint"}}</p>
+    <label class="checkline"><input type="checkbox" name="upstream_enabled" value="1" {{if .UpstreamEnabled}}checked{{end}}> {{.T "upstream.enabled"}}</label>
+    <label for="upstream_host">{{.T "upstream.host"}}</label>
+    <input id="upstream_host" name="upstream_host" type="text" value="{{.UpstreamHost}}" dir="ltr" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="127.0.0.1">
+    <label for="upstream_port">{{.T "upstream.port"}}</label>
+    <input id="upstream_port" name="upstream_port" type="number" min="1" max="65535" value="{{.UpstreamPort}}" dir="ltr" inputmode="numeric" autocomplete="off" placeholder="3067">
+    <label for="upstream_username">{{.T "upstream.username"}}</label>
+    <input id="upstream_username" name="upstream_username" type="text" value="{{.UpstreamUsername}}" dir="ltr" autocomplete="off">
+    <label for="upstream_password">{{.T "upstream.password"}}</label>
+    <input id="upstream_password" name="upstream_password" type="password" value="" dir="ltr" autocomplete="new-password">
+    <p class="hint">{{.T "upstream.password_hint"}}</p>
+    <button type="submit" class="go">{{.T "upstream.save"}}</button>
+
+    <h3>{{.T "advanced.recover.heading"}}</h3>''')
+
+          p='internal/panel/i18n_messages.go'
+          s=Path(p).read_text()
+          if '"upstream.heading"' not in s:
+              s=s.replace('var messagesFA = map[Key]string{\n', '''var messagesFA = map[Key]string{
+\t"upstream.heading": "پراکسی بالادستی SOCKS5",
+\t"upstream.hint": "اختیاری است. ترافیک کاسپین ابتدا به این SOCKS5 می‌رود؛ نیازی به وارد کردن کانفیگ VLESS یا VMess جداگانه نیست. برای v2rayN می‌توانید مثلاً 127.0.0.1:3067 یا یک آدرس LAN وارد کنید.",
+\t"upstream.enabled": "استفاده از پراکسی بالادستی",
+\t"upstream.host": "آدرس / IP پراکسی",
+\t"upstream.port": "پورت",
+\t"upstream.username": "نام کاربری (اختیاری)",
+\t"upstream.password": "رمز عبور (اختیاری)",
+\t"upstream.password_hint": "اگر رمز قبلی تنظیم شده و این کادر خالی بماند، رمز قبلی حفظ می‌شود.",
+\t"upstream.save": "ذخیرهٔ پراکسی بالادستی",
+''',1)
+              s=s.replace('var messagesEN = map[Key]string{\n', '''var messagesEN = map[Key]string{
+\t"upstream.heading": "Upstream SOCKS5 proxy",
+\t"upstream.hint": "Optional. Caspian sends traffic to this SOCKS5 server first; no separate VLESS/VMess configuration is required. For v2rayN you can use 127.0.0.1:3067 or a LAN address.",
+\t"upstream.enabled": "Use upstream proxy",
+\t"upstream.host": "Proxy address / IP",
+\t"upstream.port": "Port",
+\t"upstream.username": "Username (optional)",
+\t"upstream.password": "Password (optional)",
+\t"upstream.password_hint": "If a password is already set and this field is empty, the existing password is kept.",
+\t"upstream.save": "Save upstream proxy",
+''',1)
+          Path(p).write_text(s)
+
+          import subprocess
+          subprocess.run(['gofmt','-w','internal/xcfg/options.go','internal/xcfg/build.go','internal/xcfg/errors.go','internal/state/state.go','internal/state/migrate.go','internal/panel/priv.go','internal/panel/handlers.go','internal/panel/view.go'], check=True)
+          PY
+      - name: Verify
+        run: go test ./internal/xcfg ./internal/state ./internal/panel
+      - name: Commit implementation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "feat: add upstream SOCKS5 front proxy"
+          git push
