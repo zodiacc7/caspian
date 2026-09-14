@@ -47,7 +47,7 @@ import (
 // into "install a newer release".
 // Version 4 retains the optional spoof name. Version 5 adds independent split
 // settings. Older builds must not silently drop these choices.
-const CurrentVersion = 5
+const CurrentVersion = 6
 
 // DefaultDir is where the appliance keeps its state. Callers may override it;
 // nothing in this package assumes it.
@@ -306,6 +306,14 @@ type Advanced struct {
 	// has somewhere to record the choice, and so that turning it on is one
 	// deliberate edit in one place rather than a rebuild.
 	ClientIPv6 string `json:"client_ipv6"`
+
+	// Optional front SOCKS5 proxy used before the main proxy outbound.
+	// Credentials are Secret values so they remain redacted by fmt.
+	UpstreamEnabled  bool   `json:"upstream_enabled,omitempty"`
+	UpstreamHost     string `json:"upstream_host,omitempty"`
+	UpstreamPort     uint16 `json:"upstream_port,omitempty"`
+	UpstreamUsername Secret `json:"upstream_username,omitempty"`
+	UpstreamPassword Secret `json:"upstream_password,omitempty"`
 
 	// EngineLogLevel is the xray-core log level. Design section 9 warns that
 	// engine error strings embed the private key, the seed, the short id and
