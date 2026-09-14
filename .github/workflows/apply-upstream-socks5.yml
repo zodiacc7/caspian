@@ -54,10 +54,12 @@ jobs:
               priv = priv.replace("type StartRequest struct {\n", "type StartRequest struct {\n\tUpstream UpstreamProxySpec\n", 1)
               Path("internal/panel/priv.go").write_text(priv)
           PY
+      - name: Apply persistent state and panel
+        run: python3 scripts/apply_upstream_panel.py
       - name: Format
-        run: gofmt -w internal/xcfg/options.go internal/xcfg/build.go internal/privsvc/plans.go internal/panel/priv.go
+        run: gofmt -w internal/state/state.go internal/state/migrate.go internal/xcfg/options.go internal/xcfg/build.go internal/privsvc/plans.go internal/panel/priv.go internal/panel/handlers.go internal/panel/view.go
       - name: Test
-        run: go test ./internal/xcfg ./internal/privsvc
+        run: go test ./internal/state ./internal/xcfg ./internal/privsvc ./internal/panel
       - name: Commit patch
         run: |
           if git diff --quiet; then
@@ -66,6 +68,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add internal/xcfg internal/privsvc internal/panel/priv.go
-          git commit -m "feat: add upstream SOCKS5 core support"
+          git add internal/state internal/xcfg internal/privsvc internal/panel scripts/apply_upstream_panel.py .github/workflows/apply-upstream-socks5.yml
+          git commit -m "feat: add upstream SOCKS5 settings to panel"
           git push
