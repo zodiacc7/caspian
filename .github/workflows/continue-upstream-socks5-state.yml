@@ -31,16 +31,31 @@ jobs:
           if 'func migrateV5ToV6(' not in s:
               s += '''\n// migrateV5ToV6 adds the optional upstream SOCKS5 settings.\n// Older state has no such keys, so the zero values intentionally mean disabled.\nfunc migrateV5ToV6(st *State) error {\n\tst.Version = 6\n\treturn nil\n}\n'''
           p.write_text(s)
+
+          # The previous automated attempt accidentally replaced the test file
+          # with only a prefix. Restore the upstream test and add non-zero values
+          # for every new state field so the existing reflection guard covers them.
+          import urllib.request
+          test_path = Path('internal/state/store_test.go')
+          upstream = urllib.request.urlopen(
+              'https://raw.githubusercontent.com/Iman/caspian/main/internal/state/store_test.go',
+              timeout=30,
+          ).read().decode()
+          marker = '\t\t\tPanelOnLAN:        true,\n'
+          addition = marker + '''\t\t\tUpstreamEnabled:   true,\n\t\t\tUpstreamHost:      "192.0.2.20",\n\t\t\tUpstreamPort:      3067,\n\t\t\tUpstreamUsername:  Secret("upstream-user"),\n\t\t\tUpstreamPassword:  Secret("upstream-pass"),\n'''
+          if marker not in upstream:
+              raise SystemExit('store_test fixture marker not found upstream')
+          test_path.write_text(upstream.replace(marker, addition, 1))
           PY
       - name: Format and test
         run: |
-          gofmt -w internal/state/state.go internal/state/migrate.go
+          gofmt -w internal/state/state.go internal/state/migrate.go internal/state/store_test.go
           go test ./internal/state ./internal/xcfg ./internal/privsvc
       - name: Commit
         run: |
           if git diff --quiet; then exit 0; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add internal/state/state.go internal/state/migrate.go
+          git add internal/state/state.go internal/state/migrate.go internal/state/store_test.go
           git commit -m 'feat: persist upstream SOCKS5 settings'
           git push
