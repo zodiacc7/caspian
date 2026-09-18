@@ -7,13 +7,13 @@ import "testing"
 
 func TestValidateUpstreamSOCKS5(t *testing.T) {
 	tests := []struct {
-		name string
+		name    string
 		enabled bool
 		address string
-		port uint16
-		user string
-		pass string
-		bad bool
+		port    uint16
+		user    string
+		pass    string
+		bad     bool
 	}{
 		{"disabled", false, "", 0, "", "", false},
 		{"noauth", true, "127.0.0.1", 1080, "", "", false},
