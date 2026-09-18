@@ -198,10 +198,10 @@ func TestUpstreamSOCKS5OutboundWithoutCredentialsHasNoUsers(t *testing.T) {
 
 func TestUpstreamSOCKS5ChainingHandlesMissingOptionalSettings(t *testing.T) {
 	cases := []string{
-		"{"tag":"proxy","protocol":"vless"}",
-		"{"tag":"proxy","protocol":"vless","streamSettings":null}",
-		"{"tag":"proxy","protocol":"vless","streamSettings":{"network":"raw"}}",
-		"{"tag":"proxy","protocol":"vless","streamSettings":{"sockopt":null}}",
+		`{"tag":"proxy","protocol":"vless"}`,
+		`{"tag":"proxy","protocol":"vless","streamSettings":null}`,
+		`{"tag":"proxy","protocol":"vless","streamSettings":{"network":"raw"}}`,
+		`{"tag":"proxy","protocol":"vless","streamSettings":{"sockopt":null}}`,
 	}
 	for _, input := range cases {
 		raw, err := chainOutboundViaSOCKS5(json.RawMessage(input), TagUpstreamSOCKS5)
@@ -224,10 +224,11 @@ func TestUpstreamSOCKS5ChainingHandlesMissingOptionalSettings(t *testing.T) {
 
 func TestUpstreamSOCKS5ChainingRejectsMalformedSettings(t *testing.T) {
 	cases := []string{
-		"{"tag":"proxy","streamSettings":"bad"}",
-		"{"tag":"proxy","streamSettings":{"sockopt":"bad"}}",
-		"{"tag":"proxy","streamSettings":{"sockopt":{"ok":true}}",
-		"{"tag":"proxy"",
+		`{"tag":"proxy","streamSettings":"bad"}`,
+		`{"tag":"proxy","streamSettings":{"sockopt":"bad"}}`,
+		`{"tag":"proxy","streamSettings":{"sockopt":{"ok":true}}`,
+		`{"tag":"proxy"`,
+
 	}
 	for _, input := range cases {
 		if _, err := chainOutboundViaSOCKS5(json.RawMessage(input), TagUpstreamSOCKS5); err == nil {
