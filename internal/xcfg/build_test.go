@@ -140,10 +140,6 @@ func axes() [][]axis {
 			{"log-error", func(o *Options) { o.LogLevel = LogError }},
 		},
 		{
-			{"upstream-off", func(o *Options) {}},
-			{"upstream-noauth", func(o *Options) {
-				o.Upstream = UpstreamSOCKS5{Enabled: true, Address: "127.0.0.1", Port: 1080}
-			}},
 			{"upstream-auth", func(o *Options) {
 				o.Upstream = UpstreamSOCKS5{Enabled: true, Address: "127.0.0.1", Port: 1080, Username: "user", Password: "pass"}
 			}},

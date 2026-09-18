@@ -190,8 +190,8 @@ type pageData struct {
 
 	// ---- advanced ----
 	Interfaces        []IfaceChoice
-	Channels         []ChannelChoice
-	Bands            []BandOption
+	Channels        []ChannelChoice
+	Bands           []BandOption
 	LogLevels        []LogLevelOption
 	CurrentInternet  LTR
 	CurrentHotspot   LTR

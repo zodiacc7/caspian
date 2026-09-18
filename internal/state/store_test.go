@@ -71,8 +71,8 @@ func fullState(t *testing.T) State {
 			DNSMode:           DNSModeTunnel,
 			OnTunnelDown:      OnTunnelDownBlock,
 			ClientIPv6:        ClientIPv6Block,
-			EngineLogLevel: "warning",
-			PanelOnLAN:     true,
+			EngineLogLevel:    "warning",
+			PanelOnLAN:        true,
 			UpstreamSOCKS5: UpstreamSOCKS5{
 				Enabled:  true,
 				Address:  "127.0.0.1",

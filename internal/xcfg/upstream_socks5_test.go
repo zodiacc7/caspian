@@ -66,7 +66,7 @@ func TestUpstreamSOCKS5ChainingPreservesExistingSockopt(t *testing.T) {
 	if string(ss["network"]) != "\"ws\"" {
 		t.Fatalf("network changed: %s", raw)
 	}
-	if string(sock["dialerProxy"]) != "\"" + TagUpstreamSOCKS5 + "\"" {
+	if string(sock["dialerProxy"]) != "\""+TagUpstreamSOCKS5+"\"" {
 		t.Fatalf("dialerProxy=%s", sock["dialerProxy"])
 	}
 	if string(sock["tcpFastOpen"]) != "true" {

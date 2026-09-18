@@ -274,8 +274,8 @@ func everythingOverriddenMutation(o *Options) {
 		Enabled:  true,
 		Address:  "127.0.0.1",
 		Port:     1080,
-		Username: "golden-upstream-user",
-		Password: "golden-upstream-pass",
+		Username: "u",
+		Password: "p",
 	}
 }
 
