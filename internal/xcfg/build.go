@@ -186,6 +186,12 @@ func Build(o Options) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if o.Upstream.Enabled {
+		proxy, err = chainOutboundViaSOCKS5(proxy, TagUpstreamSOCKS5)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	outbounds := []any{}
 	// The proxy outbound is FIRST, and that position is load-bearing.
@@ -194,6 +200,13 @@ func Build(o Options) ([]byte, error) {
 	// hands any connection no rule matched to it. Whatever is first is what
 	// carries traffic when the rules are wrong, so it is the tunnel.
 	outbounds = append(outbounds, proxy)
+	if o.Upstream.Enabled {
+		upstream, err := upstreamSOCKS5OutboundFor(o.Upstream)
+		if err != nil {
+			return nil, err
+		}
+		outbounds = append(outbounds, upstream)
+	}
 	outbounds = append(outbounds, direct(), blackhole())
 	if o.DNS.Intercept || o.LocalDNS.Enabled {
 		outbounds = append(outbounds, dnsOut())

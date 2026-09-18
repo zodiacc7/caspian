@@ -265,6 +265,10 @@ type Options struct {
 	SOCKS    SOCKS
 	DNS      DNS
 	LocalDNS LocalDNS
+
+	// Upstream is an optional front proxy used only to reach the configured
+	// tunnel server. Client traffic continues to route to TagProxy.
+	Upstream UpstreamSOCKS5
 }
 
 // DefaultSocksPort is the loopback proxy and diagnostics port.
@@ -367,6 +371,9 @@ func (o Options) normalise() Options {
 
 // check validates a normalised Options. Errors name the field, never a value.
 func (o Options) check() error {
+	if err := o.Upstream.check(); err != nil {
+		return err
+	}
 	switch o.LogLevel {
 	case LogDebug, LogInfo, LogWarning, LogError:
 	default:
