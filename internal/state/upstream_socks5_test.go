@@ -4,12 +4,16 @@
 package state
 
 import (
+	"os"
 	"strings"
 	"testing"
 )
 
 func TestUpstreamSOCKS5StateRoundTripAndRedaction(t *testing.T) {
 	dir := t.TempDir()
+	if err := os.Chmod(dir, dirMode); err != nil {
+		t.Fatal(err)
+	}
 	st, err := Load(dir)
 	if err != nil {
 		t.Fatal(err)
@@ -42,6 +46,9 @@ func TestUpstreamSOCKS5StateRoundTripAndRedaction(t *testing.T) {
 
 func TestUpstreamSOCKS5StateRejectsIncompleteCredentials(t *testing.T) {
 	dir := t.TempDir()
+	if err := os.Chmod(dir, dirMode); err != nil {
+		t.Fatal(err)
+	}
 	st, err := Load(dir)
 	if err != nil {
 		t.Fatal(err)
