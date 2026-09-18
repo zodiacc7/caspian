@@ -151,7 +151,6 @@ func migrateV4ToV5(st *State) error {
 	return nil
 }
 
-
 // migrateV5ToV6 introduces the optional upstream SOCKS5 front-proxy settings.
 // Older state has no such fields, so the zero value means disabled with no
 // credentials, which is the safe default.
