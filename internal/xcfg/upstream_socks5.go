@@ -32,8 +32,7 @@ func (o UpstreamSOCKS5) check() error {
 		return errors.New("upstream SOCKS5 address is invalid")
 	}
 	for _, r := range o.Address {
-		if r == 0 || r == ' ' || r == '	' || r == '' || r == '
-' {
+		if r == 0 || r == ' ' || r == '\t' || r == '\r' || r == '\n' {
 			return errors.New("upstream SOCKS5 address is invalid")
 		}
 	}
