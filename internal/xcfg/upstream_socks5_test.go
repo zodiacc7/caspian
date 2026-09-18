@@ -177,3 +177,61 @@ func TestUpstreamSOCKS5RejectsInvalidConfiguration(t *testing.T) {
 		t.Fatal("incomplete credentials were accepted by outbound builder")
 	}
 }
+
+func TestUpstreamSOCKS5OutboundWithoutCredentialsHasNoUsers(t *testing.T) {
+	raw, err := upstreamSOCKS5OutboundFor(UpstreamSOCKS5{
+		Enabled: true,
+		Address: "127.0.0.1",
+		Port:    1080,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got upstreamSOCKS5Outbound
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Settings.Servers) != 1 || len(got.Settings.Servers[0].Users) != 0 {
+		t.Fatalf("unauthenticated upstream unexpectedly contains users: %s", raw)
+	}
+}
+
+func TestUpstreamSOCKS5ChainingHandlesMissingOptionalSettings(t *testing.T) {
+	cases := []string{
+		"{"tag":"proxy","protocol":"vless"}",
+		"{"tag":"proxy","protocol":"vless","streamSettings":null}",
+		"{"tag":"proxy","protocol":"vless","streamSettings":{"network":"raw"}}",
+		"{"tag":"proxy","protocol":"vless","streamSettings":{"sockopt":null}}",
+	}
+	for _, input := range cases {
+		raw, err := chainOutboundViaSOCKS5(json.RawMessage(input), TagUpstreamSOCKS5)
+		if err != nil {
+			t.Fatalf("input %s: %v", input, err)
+		}
+		var out map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &out); err != nil {
+			t.Fatal(err)
+		}
+		var ss map[string]json.RawMessage
+		if err := json.Unmarshal(out["streamSettings"], &ss); err != nil {
+			t.Fatal(err)
+		}
+		if len(ss["sockopt"]) == 0 {
+			t.Fatalf("input %s: sockopt missing", input)
+		}
+	}
+}
+
+func TestUpstreamSOCKS5ChainingRejectsMalformedSettings(t *testing.T) {
+	cases := []string{
+		"{"tag":"proxy","streamSettings":"bad"}",
+		"{"tag":"proxy","streamSettings":{"sockopt":"bad"}}",
+		"{"tag":"proxy","streamSettings":{"sockopt":{"ok":true}}",
+		"{"tag":"proxy"",
+	}
+	for _, input := range cases {
+		if _, err := chainOutboundViaSOCKS5(json.RawMessage(input), TagUpstreamSOCKS5); err == nil {
+			t.Fatalf("accepted malformed input: %s", input)
+		}
+	}
+}
