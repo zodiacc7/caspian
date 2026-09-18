@@ -89,10 +89,31 @@
           "type": "",
           "xver": 0
         },
-        "security": "reality"
+        "security": "reality",
+        "sockopt": {
+          "dialerProxy": "upstream-socks5"
+        }
       },
       "tag": "proxy",
       "targetStrategy": ""
+    },
+    {
+      "tag": "upstream-socks5",
+      "protocol": "socks",
+      "settings": {
+        "servers": [
+          {
+            "address": "127.0.0.1",
+            "port": 1080,
+            "users": [
+              {
+                "user": "u",
+                "pass": "p"
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "tag": "direct",
