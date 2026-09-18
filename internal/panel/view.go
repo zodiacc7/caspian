@@ -189,7 +189,7 @@ type pageData struct {
 	Events []EventLine
 
 	// ---- advanced ----
-	Interfaces       []IfaceChoice
+	Interfaces        []IfaceChoice
 	Channels        []ChannelChoice
 	Bands           []BandOption
 	LogLevels        []LogLevelOption
