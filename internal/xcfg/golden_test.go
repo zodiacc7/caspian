@@ -270,6 +270,13 @@ func everythingOverriddenMutation(o *Options) {
 	o.LocalDNS.Enabled = true
 	o.LocalDNS.Listen = "::1"
 	o.LocalDNS.Port = 15353
+	o.Upstream = UpstreamSOCKS5{
+		Enabled:  true,
+		Address:  "127.0.0.1",
+		Port:     1080,
+		Username: "golden-upstream-user",
+		Password: "golden-upstream-pass",
+	}
 }
 
 func everythingOverridden(withLink func(func() string, func(*Options)) func(*testing.T) []byte) goldenCase {
