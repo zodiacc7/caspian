@@ -90,7 +90,7 @@
   advanced.upstream.bad
   advanced.upstream.enable
   advanced.upstream.heading
-  advanced.upstream.note
+  advanced.upstream.hint
   advanced.upstream.password
   advanced.upstream.passwordset
   advanced.upstream.port
@@ -560,7 +560,7 @@
   advanced.upstream.bad
   advanced.upstream.enable
   advanced.upstream.heading
-  advanced.upstream.note
+  advanced.upstream.hint
   advanced.upstream.password
   advanced.upstream.passwordset
   advanced.upstream.port
