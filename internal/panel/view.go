@@ -189,9 +189,9 @@ type pageData struct {
 	Events []EventLine
 
 	// ---- advanced ----
-	Interfaces        []IfaceChoice
-	Channels         []ChannelChoice
-	Bands            []BandOption
+	Interfaces       []IfaceChoice
+	Channels        []ChannelChoice
+	Bands           []BandOption
 	LogLevels        []LogLevelOption
 	CurrentInternet  LTR
 	CurrentHotspot   LTR
