@@ -2,7 +2,7 @@
 
 # Caspian-BYOC
 
-[**دانلود آخرین نسخه**](https://github.com/Iman/caspian/releases/latest) | [**باز کردن ویکی**](https://github.com/Iman/caspian/wiki/Home.fa)
+[**دانلود آخرین نسخه**](https://github.com/zodiacc7/caspian/releases/latest) | [**باز کردن ویکی**](https://github.com/Iman/caspian/wiki/Home.fa)
 
 <div dir="ltr" align="left">
 
@@ -12,7 +12,7 @@
 
 <div dir="ltr" align="left">
 
-[![ci](https://github.com/Iman/caspian/actions/workflows/ci.yml/badge.svg)](https://github.com/Iman/caspian/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/Iman/caspian?label=release)](https://github.com/Iman/caspian/releases/latest) [![licence AGPL-3.0-or-later](https://img.shields.io/badge/licence-AGPL--3.0--or--later-blue)](LICENSE) [![platform Windows, macOS, Raspberry Pi and Linux](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Raspberry%20Pi%20%7C%20Linux-blue)](https://github.com/Iman/caspian/releases/latest) [![container](https://img.shields.io/badge/ghcr.io-caspian-blue)](https://github.com/Iman/caspian/pkgs/container/caspian) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Iman/caspian)
+[![ci](https://github.com/zodiacc7/caspian/actions/workflows/ci.yml/badge.svg)](https://github.com/zodiacc7/caspian/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/Iman/caspian?label=release)](https://github.com/zodiacc7/caspian/releases/latest) [![licence AGPL-3.0-or-later](https://img.shields.io/badge/licence-AGPL--3.0--or--later-blue)](LICENSE) [![platform Windows, macOS, Raspberry Pi and Linux](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Raspberry%20Pi%20%7C%20Linux-blue)](https://github.com/zodiacc7/caspian/releases/latest) [![container](https://img.shields.io/badge/ghcr.io-caspian-blue)](https://github.com/zodiacc7/caspian/pkgs/container/caspian) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Iman/caspian)
 
 </div>
 
@@ -182,7 +182,7 @@ D  [1] --Wi-Fi--> [2: one radio] --Wi-Fi--> [3]
 ## آزمایش‌های ثبت‌شده
 
 > این راهنما از README موجود منتقل شده است. تاریخ اندازه‌گیری‌ها همان تاریخ اصلی است؛ این جابه‌جایی گزارش اجرای تازهٔ آزمون‌ها نیست.
-> [English](https://github.com/Iman/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.md) | [فارسی](https://github.com/Iman/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.fa.md) | [Русский](https://github.com/Iman/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.ru.md) | [中文](https://github.com/Iman/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.zh.md)
+> [English](https://github.com/zodiacc7/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.md) | [فارسی](https://github.com/zodiacc7/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.fa.md) | [Русский](https://github.com/zodiacc7/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.ru.md) | [中文](https://github.com/zodiacc7/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.zh.md)
 
 ### چه چیزی از دلِ یک سرورِ واقعی بایت حمل کرده است
 
@@ -283,17 +283,17 @@ golden سنجاق شده است**، پس تغییر در نحوهٔ ساخته �
 اجرای دوم خط‌های PASS اجرای اول را چاپ می‌کند و با کد 0 بیرون می‌آید، در حالی که
 هیچ چیز اجرا نکرده است.
 
-دروازهٔ کامل [<span dir="ltr">`scripts/gate.sh`</span>](https://github.com/Iman/caspian/blob/main/scripts/gate.sh) است: gofmt، <span dir="ltr">`go vet`</span>، کلِ مجموعهٔ آزمون همراه با
+دروازهٔ کامل [<span dir="ltr">`scripts/gate.sh`</span>](https://github.com/zodiacc7/caspian/blob/main/scripts/gate.sh) است: gofmt، <span dir="ltr">`go vet`</span>، کلِ مجموعهٔ آزمون همراه با
 race detector، و کفِ پوشش برای هر بسته. پیش از آنکه آن را به لوله‌ای بدهید
 سرآیندش را بخوانید. یک لولهٔ shell وضعیتِ آخرین فرمانش را برمی‌گرداند، و همین تله
 پیش‌تر در این پروژه یک سبزِ دروغین ساخته است.
 
-[<span dir="ltr">`packaging/test-install.sh`</span>](https://github.com/Iman/caspian/blob/main/packaging/test-install.sh) آن دو اسکریپتِ shell را روی هر دستگاهی که bash دارد
+[<span dir="ltr">`packaging/test-install.sh`</span>](https://github.com/zodiacc7/caspian/blob/main/packaging/test-install.sh) آن دو اسکریپتِ shell را روی هر دستگاهی که bash دارد
 پوشش می‌دهد، از جمله دستگاهی که نصب روی آن ممکن نیست.
 
 ### مجموعهٔ آزمونِ رفتار
 
-[<span dir="ltr">`docs/BEHAVIOUR.md`</span>](https://github.com/Iman/caspian/blob/main/docs/BEHAVIOUR.md) تعداد 24 سناریو را فهرست می‌کند. اجرای 2026-08-31 هر 24 تا را
+[<span dir="ltr">`docs/BEHAVIOUR.md`</span>](https://github.com/zodiacc7/caspian/blob/main/docs/BEHAVIOUR.md) تعداد 24 سناریو را فهرست می‌کند. اجرای 2026-08-31 هر 24 تا را
 اجرا کرد، و <span dir="ltr">`TestEveryScenarioCanFail`</span> تعداد 24 نقصِ تزریق‌شدهٔ متناظر را اجرا
 کرد، پس هر سناریو دیده شده که برای همان چیزِ مشخصی که ادعای تشخیصش را دارد قرمز
 شود. <span dir="ltr">`TestBehaviourDocumentListsEveryScenario`</span> اگر سند و مجموعهٔ آزمون از هم
@@ -318,7 +318,7 @@ race detector، و کفِ پوشش برای هر بسته. پیش از آنکه 
 
 ### روی سخت‌افزارِ هدف
 
-[<span dir="ltr">`internal/netcfg/testdata/PROVENANCE.md`</span>](https://github.com/Iman/caspian/blob/main/internal/netcfg/testdata/PROVENANCE.md) همان ثبت است، و دربارهٔ تفاوتِ آنچه
+[<span dir="ltr">`internal/netcfg/testdata/PROVENANCE.md`</span>](https://github.com/zodiacc7/caspian/blob/main/internal/netcfg/testdata/PROVENANCE.md) همان ثبت است، و دربارهٔ تفاوتِ آنچه
 گرفته شده و آنچه نوشته شده دقیق است. نامِ فایل‌ها کلاس را حمل می‌کنند:
 <span dir="ltr">`capture-pi5-`</span> خروجیِ بایتیِ یک فرمانِ واقعی روی Pi است، <span dir="ltr">`scenario-`</span> دستگاهی است
 که هیچ‌کس اندازه‌اش نگرفته، و <span dir="ltr">`golden-`</span> خروجیِ خودِ این پروژه است.
@@ -339,7 +339,7 @@ race detector، و کفِ پوشش برای هر بسته. پیش از آنکه 
 
 ### سرتاسر، با یک گوشیِ واقعی
 
-بستر [<span dir="ltr">`test/hardware/caspian-hw`</span>](https://github.com/Iman/caspian/blob/main/test/hardware/caspian-hw) است و دستورکارش [<span dir="ltr">`docs/HARDWARE-TEST.md`</span>](https://github.com/Iman/caspian/blob/main/docs/HARDWARE-TEST.md).
+بستر [<span dir="ltr">`test/hardware/caspian-hw`</span>](https://github.com/zodiacc7/caspian/blob/main/test/hardware/caspian-hw) است و دستورکارش [<span dir="ltr">`docs/HARDWARE-TEST.md`</span>](https://github.com/zodiacc7/caspian/blob/main/docs/HARDWARE-TEST.md).
 استانداردش استانداردِ خودِ این پروژه است. یک اتصال نتیجه نیست، و یک ترابری فقط
 وقتی اثبات شده که ترافیکِ واقعی از آن عبور کرده و آدرسِ خروجی گرفته و با سروری که
 کانفیگ نام می‌برد تطبیق داده شده باشد. آدرسِ خروجی‌ای که با مبنای بدونِ تونل یکی
@@ -371,7 +371,7 @@ VOID در دفتر هستند و پاک نشده‌اند. و فراورده‌�
 نمی‌توانید آن اجرا را وارسی کنید. فقط می‌توانید خودتان بستر را دوباره اجرا کنید.
 
 دو منبع به کار می‌رود چون یکی می‌تواند از حافظهٔ نهان یا کهنه باشد، و هر دو به
-آدرس‌های IP سنجاق شده‌اند نه به نام‌ها. [<span dir="ltr">`docs/HARDWARE-TEST.md`</span>](https://github.com/Iman/caspian/blob/main/docs/HARDWARE-TEST.md) دلیلش را در
+آدرس‌های IP سنجاق شده‌اند نه به نام‌ها. [<span dir="ltr">`docs/HARDWARE-TEST.md`</span>](https://github.com/zodiacc7/caspian/blob/main/docs/HARDWARE-TEST.md) دلیلش را در
 پاراگرافی توضیح می‌دهد که خودش آن را مهم‌ترین پاراگرافِ آن فایل می‌نامد. resolver
 آن شبکهٔ محلی سرویس‌های اعلامِ IP را به چاهک می‌فرستد. پس دستگاهی که هیچ چیز جز
 سرورِ DNS را عوض نکرده باشد و اصلاً هیچ ترافیکی را تونل نکرده باشد، دقیقاً همان
