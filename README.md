@@ -1,6 +1,6 @@
 # Caspian-BYOC
 
-[**Download latest release**](https://github.com/Iman/caspian/releases/latest) | [**Open wiki**](https://github.com/Iman/caspian/wiki/Home)
+[**Download latest release**](https://github.com/zodiacc7/caspian/releases/latest) | [**Open wiki**](https://github.com/Iman/caspian/wiki/Home)
 
 To build the Windows app and installer locally, see [Windows build instructions](docs/WINDOWS-BUILD.md).
 
@@ -12,7 +12,7 @@ To build the Windows app and installer locally, see [Windows build instructions]
 
 <div dir="ltr" align="left">
 
-[![ci](https://github.com/Iman/caspian/actions/workflows/ci.yml/badge.svg)](https://github.com/Iman/caspian/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/Iman/caspian?label=release)](https://github.com/Iman/caspian/releases/latest) [![licence AGPL-3.0-or-later](https://img.shields.io/badge/licence-AGPL--3.0--or--later-blue)](LICENSE) [![platform Windows, macOS, Raspberry Pi and Linux](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Raspberry%20Pi%20%7C%20Linux-blue)](https://github.com/Iman/caspian/releases/latest) [![container](https://img.shields.io/badge/ghcr.io-caspian-blue)](https://github.com/Iman/caspian/pkgs/container/caspian) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Iman/caspian)
+[![ci](https://github.com/zodiacc7/caspian/actions/workflows/ci.yml/badge.svg)](https://github.com/zodiacc7/caspian/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/Iman/caspian?label=release)](https://github.com/zodiacc7/caspian/releases/latest) [![licence AGPL-3.0-or-later](https://img.shields.io/badge/licence-AGPL--3.0--or--later-blue)](LICENSE) [![platform Windows, macOS, Raspberry Pi and Linux](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Raspberry%20Pi%20%7C%20Linux-blue)](https://github.com/zodiacc7/caspian/releases/latest) [![container](https://img.shields.io/badge/ghcr.io-caspian-blue)](https://github.com/zodiacc7/caspian/pkgs/container/caspian) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Iman/caspian)
 
 </div>
 
@@ -159,7 +159,7 @@ The uninstaller removes only Caspian's own files. It does not remove `hostapd`, 
 ## Recorded experiments
 
 > This guide comes from the existing README. Its measurements retain their original dates; this documentation move does not report a new test run.
-> [English](https://github.com/Iman/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.md) | [فارسی](https://github.com/Iman/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.fa.md) | [Русский](https://github.com/Iman/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.ru.md) | [中文](https://github.com/Iman/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.zh.md)
+> [English](https://github.com/zodiacc7/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.md) | [فارسی](https://github.com/zodiacc7/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.fa.md) | [Русский](https://github.com/zodiacc7/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.ru.md) | [中文](https://github.com/zodiacc7/caspian/blob/108567a6a529be05b577ee68b65b48790f07e43d/README.zh.md)
 
 ### What has carried bytes through a real server
 
@@ -253,17 +253,17 @@ packages reporting `ok`.
 `-count=1` is not optional. It defeats the result cache. Without it a second run
 prints the first run's PASS lines and exits 0 having executed nothing.
 
-The full gate is [`scripts/gate.sh`](https://github.com/Iman/caspian/blob/main/scripts/gate.sh): gofmt, `go vet`, the whole suite with the
+The full gate is [`scripts/gate.sh`](https://github.com/zodiacc7/caspian/blob/main/scripts/gate.sh): gofmt, `go vet`, the whole suite with the
 race detector, and a per-package coverage floor. Read its header before you pipe
 it anywhere. A shell pipeline returns the status of its last command, and that
 trap has produced a false green in this project before.
 
-[`packaging/test-install.sh`](https://github.com/Iman/caspian/blob/main/packaging/test-install.sh) covers the two shell scripts on any machine with
+[`packaging/test-install.sh`](https://github.com/zodiacc7/caspian/blob/main/packaging/test-install.sh) covers the two shell scripts on any machine with
 bash, including one that cannot be installed to.
 
 ### The behaviour suite
 
-[`docs/BEHAVIOUR.md`](https://github.com/Iman/caspian/blob/main/docs/BEHAVIOUR.md) lists 24 scenarios. The 2026-08-31 run executed all 24, and
+[`docs/BEHAVIOUR.md`](https://github.com/zodiacc7/caspian/blob/main/docs/BEHAVIOUR.md) lists 24 scenarios. The 2026-08-31 run executed all 24, and
 `TestEveryScenarioCanFail` executed 24 matching injected defects, so each
 scenario has been watched going red for the specific thing it claims to detect.
 `TestBehaviourDocumentListsEveryScenario` fails if the document and the suite
@@ -282,7 +282,7 @@ was that the engine would load the document they produce.
 
 ### On the target hardware
 
-[`internal/netcfg/testdata/PROVENANCE.md`](https://github.com/Iman/caspian/blob/main/internal/netcfg/testdata/PROVENANCE.md) is the record, and it is careful about
+[`internal/netcfg/testdata/PROVENANCE.md`](https://github.com/zodiacc7/caspian/blob/main/internal/netcfg/testdata/PROVENANCE.md) is the record, and it is careful about
 the difference between what was captured and what was written. Filenames carry
 the class: `capture-pi5-` is byte output of a real command on the Pi,
 `scenario-` is a machine nobody has measured, and `golden-` is this project's
@@ -304,8 +304,8 @@ that had it on.
 
 ### End to end, with a real phone
 
-The harness is [`test/hardware/caspian-hw`](https://github.com/Iman/caspian/blob/main/test/hardware/caspian-hw) and the runbook is
-[`docs/HARDWARE-TEST.md`](https://github.com/Iman/caspian/blob/main/docs/HARDWARE-TEST.md). Its standard is the project's own. A connect is not a
+The harness is [`test/hardware/caspian-hw`](https://github.com/zodiacc7/caspian/blob/main/test/hardware/caspian-hw) and the runbook is
+[`docs/HARDWARE-TEST.md`](https://github.com/zodiacc7/caspian/blob/main/docs/HARDWARE-TEST.md). Its standard is the project's own. A connect is not a
 result, and a transport is proven only when real traffic has traversed it and
 the exit IP has been captured and matched to the server the config names. An
 exit IP equal to the untunnelled baseline is a leak and outranks everything else
@@ -336,7 +336,7 @@ this repository**. If you clone this, you cannot check that run. You can only
 re-run the harness yourself.
 
 Two sources are used because one can be cached or stale, and both are pinned to
-IP addresses rather than names. [`docs/HARDWARE-TEST.md`](https://github.com/Iman/caspian/blob/main/docs/HARDWARE-TEST.md) explains why in the
+IP addresses rather than names. [`docs/HARDWARE-TEST.md`](https://github.com/zodiacc7/caspian/blob/main/docs/HARDWARE-TEST.md) explains why in the
 paragraph it calls the most important in the file. The resolver on that LAN
 sinkholes IP-echo services. So a box that changed nothing but the DNS server,
 and tunnelled no traffic at all, would have shown exactly the signature a
