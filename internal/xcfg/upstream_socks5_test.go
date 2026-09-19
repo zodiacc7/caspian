@@ -242,9 +242,9 @@ func TestUpstreamSOCKS5OptionsCheckRejectsInvalidConfiguration(t *testing.T) {
 	_, err := Build(Options{
 		Link: l,
 		Upstream: UpstreamSOCKS5{
-			Enabled: true,
-			Address: "127.0.0.1",
-			Port:    1080,
+			Enabled:  true,
+			Address:  "127.0.0.1",
+			Port:     1080,
 			Username: "user",
 		},
 	})
