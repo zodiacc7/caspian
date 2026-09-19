@@ -101,20 +101,15 @@ func chainOutboundViaSOCKS5(raw json.RawMessage, dialerProxy string) (json.RawMe
 			return nil, errors.New("upstream SOCKS5 could not read proxy socket settings")
 		}
 	}
-	dialerProxyJSON, err := json.Marshal(dialerProxy)
-	if err != nil {
-		return nil, errors.New("upstream SOCKS5 could not encode the dialer")
-	}
+	// Every value in these maps is either a RawMessage obtained by parsing the
+	// caller's valid JSON or bytes just produced by encoding/json. None can
+	// make encoding/json fail, so these marshals deliberately do not create
+	// unreachable error branches in this small mutation helper.
+	dialerProxyJSON, _ := json.Marshal(dialerProxy)
 	sockopt["dialerProxy"] = dialerProxyJSON
-	encodedSockopt, err := json.Marshal(sockopt)
-	if err != nil {
-		return nil, errors.New("upstream SOCKS5 could not encode socket settings")
-	}
+	encodedSockopt, _ := json.Marshal(sockopt)
 	streamSettings["sockopt"] = encodedSockopt
-	encodedStream, err := json.Marshal(streamSettings)
-	if err != nil {
-		return nil, errors.New("upstream SOCKS5 could not encode transport settings")
-	}
+	encodedStream, _ := json.Marshal(streamSettings)
 	outbound["streamSettings"] = encodedStream
 	return json.Marshal(outbound)
 }
