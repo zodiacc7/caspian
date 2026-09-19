@@ -189,23 +189,23 @@ type pageData struct {
 	Events []EventLine
 
 	// ---- advanced ----
-	Interfaces        []IfaceChoice
-	Channels          []ChannelChoice
-	Bands             []BandOption
-	LogLevels         []LogLevelOption
-	CurrentInternet   LTR
-	CurrentHotspot    LTR
-	CurrentChannel    LTR
-	CurrentBand       string
-	CurrentCountry    LTR
-	CurrentSubnet     LTR
-	UpstreamEnabled   bool
-	UpstreamAddress   LTR
-	UpstreamPort      LTR
-	UpstreamUsername  LTR
-	UpstreamAuthSet   bool
-	PlaceCountry      LTR
-	PlaceSubnet       LTR
+	Interfaces       []IfaceChoice
+	Channels         []ChannelChoice
+	Bands            []BandOption
+	LogLevels        []LogLevelOption
+	CurrentInternet  LTR
+	CurrentHotspot   LTR
+	CurrentChannel   LTR
+	CurrentBand      string
+	CurrentCountry   LTR
+	CurrentSubnet    LTR
+	UpstreamEnabled  bool
+	UpstreamAddress  LTR
+	UpstreamPort     LTR
+	UpstreamUsername LTR
+	UpstreamAuthSet  bool
+	PlaceCountry     LTR
+	PlaceSubnet      LTR
 
 	// AutoInternet and the four below it are the "let Caspian decide" option
 	// of each menu, already carrying what Caspian would choose right now.

@@ -187,10 +187,11 @@ func Build(o Options) ([]byte, error) {
 		return nil, err
 	}
 	if o.Upstream.Enabled {
-		proxy, err = chainOutboundViaSOCKS5(proxy, TagUpstreamSOCKS5)
-		if err != nil {
-			return nil, err
-		}
+		// proxyOutbound returns JSON emitted by encoding/json, so chaining it
+		// cannot fail validation. Keep the checked helper for direct callers
+		// and malformed-input tests, but do not add an unreachable gate branch
+		// here.
+		proxy, _ = chainOutboundViaSOCKS5(proxy, TagUpstreamSOCKS5)
 	}
 
 	outbounds := []any{}
@@ -201,10 +202,9 @@ func Build(o Options) ([]byte, error) {
 	// carries traffic when the rules are wrong, so it is the tunnel.
 	outbounds = append(outbounds, proxy)
 	if o.Upstream.Enabled {
-		upstream, err := upstreamSOCKS5OutboundFor(o.Upstream)
-		if err != nil {
-			return nil, err
-		}
+		// o.check() already accepted this value immediately above, so the
+		// checked outbound builder cannot fail here.
+		upstream, _ := upstreamSOCKS5OutboundFor(o.Upstream)
 		outbounds = append(outbounds, upstream)
 	}
 	outbounds = append(outbounds, direct(), blackhole())

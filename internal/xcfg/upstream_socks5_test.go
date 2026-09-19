@@ -5,6 +5,7 @@ package xcfg
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 )
 
@@ -228,11 +229,48 @@ func TestUpstreamSOCKS5ChainingRejectsMalformedSettings(t *testing.T) {
 		`{"tag":"proxy","streamSettings":{"sockopt":"bad"}}`,
 		`{"tag":"proxy","streamSettings":{"sockopt":{"ok":true}}`,
 		`{"tag":"proxy"`,
-
 	}
 	for _, input := range cases {
 		if _, err := chainOutboundViaSOCKS5(json.RawMessage(input), TagUpstreamSOCKS5); err == nil {
 			t.Fatalf("accepted malformed input: %s", input)
 		}
+	}
+}
+
+func TestUpstreamSOCKS5OptionsCheckRejectsInvalidConfiguration(t *testing.T) {
+	l := mustParse(t, vlessRealityLink())
+	_, err := Build(Options{
+		Link: l,
+		Upstream: UpstreamSOCKS5{
+			Enabled:  true,
+			Address:  "127.0.0.1",
+			Port:     1080,
+			Username: "user",
+		},
+	})
+	if err == nil {
+		t.Fatal("Build accepted incomplete upstream credentials")
+	}
+}
+
+func TestUpstreamSOCKS5RejectsNULInAddress(t *testing.T) {
+	l := mustParse(t, vlessRealityLink())
+	_, err := Build(Options{
+		Link: l,
+		Upstream: UpstreamSOCKS5{
+			Enabled: true,
+			Address: "127.0.0.1\x00",
+			Port:    1080,
+		},
+	})
+	if err == nil {
+		t.Fatal("Build accepted an upstream address containing NUL")
+	}
+}
+
+func TestAssembleRejectsUnserializableOutbound(t *testing.T) {
+	_, err := assemble(Defaults(), []any{func() {}}, nil)
+	if !errors.Is(err, errSerialise) {
+		t.Fatalf("assemble error=%v, want %v", err, errSerialise)
 	}
 }
