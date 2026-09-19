@@ -228,7 +228,6 @@ func TestUpstreamSOCKS5ChainingRejectsMalformedSettings(t *testing.T) {
 		`{"tag":"proxy","streamSettings":{"sockopt":"bad"}}`,
 		`{"tag":"proxy","streamSettings":{"sockopt":{"ok":true}}`,
 		`{"tag":"proxy"`,
-
 	}
 	for _, input := range cases {
 		if _, err := chainOutboundViaSOCKS5(json.RawMessage(input), TagUpstreamSOCKS5); err == nil {
