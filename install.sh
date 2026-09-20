@@ -7,7 +7,7 @@
 #
 # The one command a person runs, and the only one:
 #
-#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Iman/caspian/main/install.sh)"
+#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/zodiacc7/caspian/main/install.sh)"
 #
 # After this finishes, everything else happens in the panel. Nothing here needs
 # to be run again except to upgrade, and running it again is exactly how you
@@ -94,11 +94,9 @@ readonly CASPIAN_MIN_SYSTEMD="240"
 
 # --- settings, overridable from the environment ----------------------------
 #
-# REPLACE BEFORE THE FIRST RELEASE. docs/LAYOUT.md writes the repository owner
-# as a placeholder, so this is a placeholder too rather than an invented name.
-# While it is unchanged the installer refuses to download and says how to point
-# it somewhere real, which is what makes the script testable today.
-CASPIAN_ORG="${CASPIAN_ORG:-Iman}"
+# These defaults point at the public fork. Set the environment variables only when
+# deliberately installing from a different Caspian release repository.
+CASPIAN_ORG="${CASPIAN_ORG:-zodiacc7}"
 CASPIAN_REPO="${CASPIAN_REPO:-caspian}"
 CASPIAN_VERSION="${CASPIAN_VERSION:-latest}"
 CASPIAN_BASE_URL="${CASPIAN_BASE_URL:-}"
