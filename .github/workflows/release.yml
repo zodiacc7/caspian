@@ -178,7 +178,7 @@ jobs:
     needs: [build, windows, darwin]
     uses: ./.github/workflows/package.yml
     with:
-      version: ${{ env.RELEASE_VERSION }}
+      version: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
     permissions:
       contents: read
       packages: write
