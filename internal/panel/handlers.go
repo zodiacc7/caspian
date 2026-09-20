@@ -996,6 +996,60 @@ func validateOverrides(det Detection, internet, hotspotIf string, channel int, b
 	return Problem{}
 }
 
+// handleUpstreamSOCKS5 saves only the optional upstream SOCKS5 front-proxy.
+// It deliberately does not call Detect: an upstream proxy is a connection
+// setting and does not depend on the machine's radio/interface detection.
+// This keeps the setting independently writable when the privileged service
+// is temporarily unavailable.
+func (p *Panel) handleUpstreamSOCKS5(w http.ResponseWriter, r *http.Request) {
+	sess := sessionFrom(r)
+
+	enabled := r.PostFormValue("upstream_socks5_enabled") == "1"
+	address := strings.TrimSpace(r.PostFormValue("upstream_socks5_address"))
+	username := strings.TrimSpace(r.PostFormValue("upstream_socks5_username"))
+	password := r.PostFormValue("upstream_socks5_password")
+	port := uint16(0)
+	if v := strings.TrimSpace(r.PostFormValue("upstream_socks5_port")); v != "" {
+		n, err := strconv.ParseUint(v, 10, 16)
+		if err != nil {
+			sess.setFlash(Problem{Headline: Key("advanced.upstream.portbad")}, "")
+			p.home(w, r)
+			return
+		}
+		port = uint16(n)
+	}
+
+	current := p.store.Snapshot().Advanced.UpstreamSOCKS5
+	if username != "" && password == "" && username == current.Username.Reveal() {
+		password = current.Password.Reveal()
+	}
+
+	if prob := validateUpstreamSOCKS5(enabled, address, port, username, password); !prob.Empty() {
+		sess.setFlash(prob, "")
+		p.home(w, r)
+		return
+	}
+
+	if err := p.store.Update(func(st *state.State) error {
+		st.Advanced.UpstreamSOCKS5.Enabled = enabled
+		st.Advanced.UpstreamSOCKS5.Address = address
+		st.Advanced.UpstreamSOCKS5.Port = port
+		st.Advanced.UpstreamSOCKS5.Username = state.Secret(username)
+		st.Advanced.UpstreamSOCKS5.Password = state.Secret(password)
+		return nil
+	}); err != nil {
+		p.log.Error("saving the upstream SOCKS5 settings failed", "error", err.Error())
+		sess.setFlash(Problem{Headline: MsgSaveAdvancedFailed, Advice: MsgSaveFailedAdvice}, "")
+		p.home(w, r)
+		return
+	}
+
+	p.log.Info("upstream SOCKS5 settings saved")
+	p.events.add(EventAdvancedSaved, FaultNone)
+	sess.setFlash(Problem{}, MsgNoticeAdvancedSaved)
+	p.home(w, r)
+}
+
 func isCountryCode(s string) bool {
 	if len(s) != 2 {
 		return false
