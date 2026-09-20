@@ -7,9 +7,9 @@
 
 One command, and then the panel.
 
-    sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Iman/caspian/main/install.sh)"
+    sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/zodiacc7/caspian/main/install.sh)"
 
-The owner is `Iman`, in `docs/LAYOUT.md` and in `install.sh`, where
+The owner is `zodiacc7`, in `docs/LAYOUT.md` and in `install.sh`, where
 `CASPIAN_ORG` defaults to it. The artefacts and the `SHA256SUMS` file are built
 and published by `.github/workflows/release.yml` when a version tag is pushed.
 
@@ -295,7 +295,7 @@ reason to: the only thing that holds a config is the panel.
 
 or, the same way the installer is fetched:
 
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Iman/caspian/main/uninstall.sh)"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/zodiacc7/caspian/main/uninstall.sh)"
 
 The installer keeps a local copy on the box on purpose. Somebody who wants to
 uninstall very often wants it because the box's networking is in a state they do
@@ -395,8 +395,8 @@ install.
 
 | Variable | Default | What it does |
 |---|---|---|
-| `CASPIAN_ORG` | `Iman` | Repository owner. Downloads are refused if it is empty |
-| `CASPIAN_REPO` | `caspian-byoc` | Repository name |
+| `CASPIAN_ORG` | `zodiacc7` | Repository owner. Downloads are refused if it is empty |
+| `CASPIAN_REPO` | `caspian` | Repository name |
 | `CASPIAN_VERSION` | `latest` | A release tag, or `latest` |
 | `CASPIAN_BASE_URL` | derived | Release directory holding the artefact and `SHA256SUMS`. Overrides the three above |
 | `CASPIAN_CHECKSUMS_NAME` | `SHA256SUMS` | Name of the checksums file in that directory |
@@ -504,7 +504,7 @@ Everything below needs a Raspberry Pi and none of it has been run:
 Four things had to be settled before the one-line install could work. Three are
 settled in the release workflow; the fourth was settled in the code.
 
-1. **The repository owner.** `Iman`. It is the default of `CASPIAN_ORG` in
+1. **The repository owner.** `zodiacc7`. It is the default of `CASPIAN_ORG` in
    `install.sh` and it is what the release URLs resolve to.
 2. **`GOARM=6` for the `linux/arm` artefact.** The workflow builds it that way
    and then checks the result with `readelf`, failing the release if the
