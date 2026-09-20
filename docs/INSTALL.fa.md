@@ -11,12 +11,12 @@
 
 <div dir="ltr" align="left">
 
-    sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Iman/caspian/main/install.sh)"
+    sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/zodiacc7/caspian/main/install.sh)"
 
 
 </div>
 
-مالک مخزن <span dir="ltr">`Iman`</span> است، هم در <span dir="ltr">`docs/LAYOUT.md`</span> و هم در <span dir="ltr">`install.sh`</span> که مقدار
+مالک مخزن <span dir="ltr">`zodiacc7`</span> است، هم در <span dir="ltr">`docs/LAYOUT.md`</span> و هم در <span dir="ltr">`install.sh`</span> که مقدار
 پیش‌فرض <span dir="ltr">`CASPIAN_ORG`</span> همان است. آرتیفکت‌ها و فایل <span dir="ltr">`SHA256SUMS`</span> را
 <span dir="ltr">`.github/workflows/release.yml`</span> هنگام push شدن یک تگ نسخه می‌سازد و منتشر
 می‌کند.
@@ -323,7 +323,7 @@ v1 هنوز باید پاسخش را بدهد.
 
 <div dir="ltr" align="left">
 
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Iman/caspian/main/uninstall.sh)"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/zodiacc7/caspian/main/uninstall.sh)"
 
 
 </div>
@@ -430,8 +430,8 @@ JSON را تجزیه کند، و بردار آرگومان باید به <span d
 
 | متغیر | پیش‌فرض | چه می‌کند |
 |---|---|---|
-| <span dir="ltr">`CASPIAN_ORG`</span> | <span dir="ltr">`Iman`</span> | مالک مخزن. اگر خالی باشد دانلودها رد می‌شوند |
-| <span dir="ltr">`CASPIAN_REPO`</span> | <span dir="ltr">`caspian-byoc`</span> | نام مخزن |
+| <span dir="ltr">`CASPIAN_ORG`</span> | <span dir="ltr">`zodiacc7`</span> | مالک مخزن. اگر خالی باشد دانلودها رد می‌شوند |
+| <span dir="ltr">`CASPIAN_REPO`</span> | <span dir="ltr">`caspian`</span> | نام مخزن |
 | <span dir="ltr">`CASPIAN_VERSION`</span> | <span dir="ltr">`latest`</span> | یک تگ انتشار، یا <span dir="ltr">`latest`</span> |
 | <span dir="ltr">`CASPIAN_BASE_URL`</span> | مشتق‌شده | دایرکتوری انتشار که آرتیفکت و <span dir="ltr">`SHA256SUMS`</span> را دارد. سه مورد بالا را کنار می‌زند |
 | <span dir="ltr">`CASPIAN_CHECKSUMS_NAME`</span> | <span dir="ltr">`SHA256SUMS`</span> | نام فایل چک‌سام در آن دایرکتوری |
@@ -559,7 +559,7 @@ JSON را تجزیه کند، و بردار آرگومان باید به <span d
 چهار چیز باید پیش از کارکردن نصب تک‌سطری حل‌وفصل می‌شد. سه‌تا در گردش‌کار انتشار
 حل شدند و چهارمی در کد.
 
-1. **مالک مخزن.** <span dir="ltr">`Iman`</span>. مقدار پیش‌فرض <span dir="ltr">`CASPIAN_ORG`</span> در <span dir="ltr">`install.sh`</span> همین است و
+1. **مالک مخزن.** <span dir="ltr">`zodiacc7`</span>. مقدار پیش‌فرض <span dir="ltr">`CASPIAN_ORG`</span> در <span dir="ltr">`install.sh`</span> همین است و
    آدرس‌های انتشار به همین می‌رسند.
 2. **<span dir="ltr">`GOARM=6`</span> برای آرتیفکت <span dir="ltr">`linux/arm`</span>.** گردش‌کار آن را همان‌طور می‌سازد و بعد
    نتیجه را با <span dir="ltr">`readelf`</span> بررسی می‌کند و اگر آرتیفکت ARMv6 نباشد انتشار را شکست
