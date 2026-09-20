@@ -1,4 +1,4 @@
-# Publish a container image to GitHub Packages on every release tag.
+# Publish a container image as part of the release pipeline.
 #
 # This exists so the project appears under Packages and so somebody can try the
 # panel without installing anything on a real machine. It is NOT the supported
@@ -6,14 +6,18 @@
 # taking over a machine's radio, routes and firewall, and a container cannot do
 # that without privileges that defeat the point of a container.
 #
-# What the image is good for: reading the panel, seeing the interface, checking
-# the binary runs. What it cannot do: host an access point.
+# The reusable workflow is called by release.yml for both tag pushes and manual
+# releases. Keeping the image publish in the same pipeline matters because a
+# release-created tag made with GITHUB_TOKEN does not start another push workflow.
 name: package
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_call:
+    inputs:
+      version:
+        description: "Release version/tag"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -51,7 +55,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ steps.img.outputs.name }}:${{ github.ref_name }}
+            ghcr.io/${{ steps.img.outputs.name }}:${{ inputs.version }}
             ghcr.io/${{ steps.img.outputs.name }}:latest
           provenance: true
           sbom: true
