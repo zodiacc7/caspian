@@ -746,6 +746,31 @@ func TestAdvancedModeRevealsAndNeverHides(t *testing.T) {
 	}
 }
 
+func TestUpstreamSOCKS5SaveDoesNotRequireDetection(t *testing.T) {
+	h := newHarness(t)
+	h.ready()
+	h.priv.FailStatusWith(FaultUnavailable)
+
+	token := h.tokenOn("/?advanced=1")
+	res, _ := h.postForm("/upstream", url.Values{
+		"csrf": {token},
+		"upstream_socks5_enabled": {"1"},
+		"upstream_socks5_address": {"127.0.0.1"},
+		"upstream_socks5_port": {"1080"},
+		"upstream_socks5_username": {"alice"},
+		"upstream_socks5_password": {"secret"},
+	})
+	if res.StatusCode != http.StatusSeeOther {
+		t.Fatalf("POST /upstream: status %d, want %d", res.StatusCode, http.StatusSeeOther)
+	}
+	up := h.store.Snapshot().Advanced.UpstreamSOCKS5
+	if !up.Enabled || up.Address != "127.0.0.1" || up.Port != 1080 ||
+		up.Username.Reveal() != "alice" || up.Password.Reveal() != "secret" {
+		t.Fatalf("upstream settings were not persisted correctly: enabled=%t address=%q port=%d user=%q password_set=%t",
+			up.Enabled, up.Address, up.Port, up.Username.Reveal(), !up.Password.IsZero())
+	}
+}
+
 func TestStatusJSONCarriesNoCredential(t *testing.T) {
 	h := newHarness(t)
 	h.ready()
