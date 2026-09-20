@@ -14,10 +14,10 @@ The primary SNI code and idea are credited to patterniha/SNI-Spoofing under GPL-
 - [Documentation home](https://github.com/Iman/caspian/wiki/Home)
 - [SNI spoofing setup and limitations](https://github.com/Iman/caspian/wiki/SNI-Spoofing)
 - [Third-party source versions and licenses](https://github.com/Iman/caspian/wiki/Third-Party-Credits)
-- [Windows local build and installer](https://github.com/Iman/caspian/blob/main/docs/WINDOWS-BUILD.md)
+- [Windows local build and installer](https://github.com/zodiacc7/caspian/blob/main/docs/WINDOWS-BUILD.md)
 - [Primary SNI reference](https://github.com/patterniha/SNI-Spoofing)
 
-- [Validation evidence and remaining hardware checks](https://github.com/Iman/caspian/blob/main/docs/SNI-VALIDATION.md)
+- [Validation evidence and remaining hardware checks](https://github.com/zodiacc7/caspian/blob/main/docs/SNI-VALIDATION.md)
 
 ## Persian guides
 
