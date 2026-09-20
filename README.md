@@ -12,7 +12,7 @@ To build the Windows app and installer locally, see [Windows build instructions]
 
 <div dir="ltr" align="left">
 
-[![ci](https://github.com/zodiacc7/caspian/actions/workflows/ci.yml/badge.svg)](https://github.com/zodiacc7/caspian/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/Iman/caspian?label=release)](https://github.com/zodiacc7/caspian/releases/latest) [![licence AGPL-3.0-or-later](https://img.shields.io/badge/licence-AGPL--3.0--or--later-blue)](LICENSE) [![platform Windows, macOS, Raspberry Pi and Linux](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Raspberry%20Pi%20%7C%20Linux-blue)](https://github.com/zodiacc7/caspian/releases/latest) [![container](https://img.shields.io/badge/ghcr.io-caspian-blue)](https://github.com/zodiacc7/caspian/pkgs/container/caspian) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Iman/caspian)
+[![ci](https://github.com/zodiacc7/caspian/actions/workflows/ci.yml/badge.svg)](https://github.com/zodiacc7/caspian/actions/workflows/ci.yml) [![release](https://img.shields.io/github/v/release/zodiacc7/caspian?label=release)](https://github.com/zodiacc7/caspian/releases/latest) [![licence AGPL-3.0-or-later](https://img.shields.io/badge/licence-AGPL--3.0--or--later-blue)](LICENSE) [![platform Windows, macOS, Raspberry Pi and Linux](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Raspberry%20Pi%20%7C%20Linux-blue)](https://github.com/zodiacc7/caspian/releases/latest) [![container](https://img.shields.io/badge/ghcr.io-caspian-blue)](https://github.com/zodiacc7/caspian/pkgs/container/caspian) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Iman/caspian)
 
 </div>
 
