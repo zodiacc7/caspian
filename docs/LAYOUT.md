@@ -140,7 +140,7 @@ no state file.
 One command, in the style of a package-manager installer:
 
 ```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Iman/caspian/main/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/zodiacc7/caspian/main/install.sh)"
 ```
 
 The script is the only thing a user runs in a terminal. After it finishes, every
