@@ -21,9 +21,19 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version/tag (for example v0.2.8)"
+        required: true
+        type: string
 
 permissions:
   contents: write
+  packages: write
+
+env:
+  RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
 
 concurrency:
   group: release-${{ github.ref }}
@@ -42,6 +52,22 @@ jobs:
         with:
           go-version: "1.26"
           check-latest: true
+
+      - name: Validate manually supplied release version
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -eu
+          if [[ ! "$VERSION" =~ ^v[0-9]+.[0-9]+.[0-9]+$ ]]; then
+            echo "Release version must match vMAJOR.MINOR.PATCH (for example v0.2.8)." >&2
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null 2>&1; then
+            echo "Release tag $VERSION already exists; refusing to overwrite it." >&2
+            exit 1
+          fi
+
       - name: Run the build gate
         run: bash scripts/gate.sh
 
@@ -61,7 +87,7 @@ jobs:
         run: |
           set -eu
           mkdir -p dist
-          ldflags="-s -w -X main.version=${GITHUB_REF_NAME} -X caspianbyoc.org/caspian/internal/panel.Version=${GITHUB_REF_NAME}"
+          ldflags="-s -w -X main.version=$RELEASE_VERSION -X caspianbyoc.org/caspian/internal/panel.Version=$RELEASE_VERSION"
           # -trimpath so the binary carries no build-machine paths, and
           # -buildvcs=false so it carries no commit metadata either. Neither is
           # cosmetic: this is censorship-circumvention software and a path or a
@@ -116,7 +142,7 @@ jobs:
         run: dotnet run --project .\tools\caspian-control-tests\caspian-control-tests.csproj -c Release
       - name: Build the Windows installer
         shell: powershell
-        run: .\packaging\windows\installer\build-installer.ps1 -Version "${{ github.ref_name }}" -Architecture "${{ matrix.architecture }}"
+        run: .\packaging\windows\installer\build-installer.ps1 -Version "$env:RELEASE_VERSION" -Architecture "${{ matrix.architecture }}"
       - name: Keep the Windows release file
         uses: actions/upload-artifact@v4
         with:
@@ -125,6 +151,7 @@ jobs:
 
   darwin:
     needs: gate
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
@@ -133,7 +160,6 @@ jobs:
             architecture: amd64
           - runner: macos-15
             architecture: arm64
-    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -141,15 +167,24 @@ jobs:
           go-version: "1.26"
           check-latest: true
       - name: Build the macOS DMG
-        run: bash packaging/darwin/build-dmg.sh "${{ github.ref_name }}" "${{ matrix.architecture }}"
+        run: bash packaging/darwin/build-dmg.sh "$RELEASE_VERSION" "${{ matrix.architecture }}"
       - name: Keep the macOS release file
         uses: actions/upload-artifact@v4
         with:
           name: darwin-${{ matrix.architecture }}-release
           path: dist/Caspian-*-macos-${{ matrix.architecture }}.dmg
 
-  publish:
+  package:
     needs: [build, windows, darwin]
+    uses: ./.github/workflows/package.yml
+    with:
+      version: ${{ env.RELEASE_VERSION }}
+    permissions:
+      contents: read
+      packages: write
+
+  publish:
+    needs: [build, windows, darwin, package]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -165,5 +200,8 @@ jobs:
       - name: Publish the release
         uses: softprops/action-gh-release@v2
         with:
+          token: ${{ github.token }}
+          tag_name: ${{ env.RELEASE_VERSION }}
+          target_commitish: ${{ github.sha }}
           files: dist/*
           generate_release_notes: true
