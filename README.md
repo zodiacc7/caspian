@@ -152,7 +152,7 @@ If the journal cannot be replayed, the uninstaller stops the services, removes n
 
 If the local copy is missing, fetch the same script from this repository:
 
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Iman/caspian/main/uninstall.sh)"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/zodiacc7/caspian/main/uninstall.sh)"
 
 The uninstaller removes only Caspian's own files. It does not remove `hostapd`, `dnsmasq` or any other package.
 
