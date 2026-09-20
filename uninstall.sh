@@ -11,7 +11,7 @@
 #
 # or fetch it, the same way the installer is fetched:
 #
-#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Iman/caspian/main/uninstall.sh)"
+#   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/zodiacc7/caspian/main/uninstall.sh)"
 #
 # Options:
 #
