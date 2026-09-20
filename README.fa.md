@@ -173,7 +173,7 @@ D  [1] --Wi-Fi--> [2: one radio] --Wi-Fi--> [3]
 
 <div dir="ltr" align="left">
 
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Iman/caspian/main/uninstall.sh)"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/zodiacc7/caspian/main/uninstall.sh)"
 
 </div>
 
