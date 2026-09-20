@@ -147,7 +147,7 @@
 <div dir="ltr" align="left">
 
 ```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Iman/caspian/main/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/zodiacc7/caspian/main/install.sh)"
 ```
 
 </div>
